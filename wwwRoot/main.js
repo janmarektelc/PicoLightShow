@@ -48,6 +48,7 @@ function switchLightEffect(effect)
   httpGet('/switch_effect?effect='+effect);
 }
 
+
 function ipConfigAvailabilityReDraw()
 {
   var isClientWifiMode = document.getElementById("wifiModeSelection").value == "1";
@@ -63,7 +64,51 @@ function ipConfigAvailabilityReDraw()
 
 function saveSettings()
 {
-  console.log("save settings");
+  var password = '*^NotChanged^*';
+  if (usePassword)
+  {
+    if (document.getElementById("wifiPass").value != document.getElementById("wifiPass1").value)
+    {
+      var myModal = new bootstrap.Modal(document.getElementById('incorrectPasswordModal')); 
+      myModal.show(); 
+
+      return;
+    }
+    password = document.getElementById("wifiPass").value;
+    if (password == '')
+      password = '*^Empty^*';
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/network_data", true);
+  xhr.setRequestHeader('Content-Type', 'text/plain');
+  data = '~'+document.getElementById("wifiModeSelection").value+'~'
+    +document.getElementById("wifiSSID").value+'~'
+    +password+'~'
+    +(document.getElementById("isDhcp").checked ? '1~' : '0~')
+    +document.getElementById("ip1").value+'.'+document.getElementById("ip2").value+'.'+document.getElementById("ip3").value+'.'+document.getElementById("ip4").value+'~'
+    +document.getElementById("mask1").value+'.'+document.getElementById("mask2").value+'.'+document.getElementById("mask3").value+'.'+document.getElementById("mask4").value+'~'
+    +document.getElementById("gw1").value+'.'+document.getElementById("gw2").value+'.'+document.getElementById("gw3").value+'.'+document.getElementById("gw4").value+'~'
+    ;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState  == XMLHttpRequest.DONE)
+    {
+      if (xhr.status == 200)
+      {
+        var okToast = document.getElementById('settingsSavedOkToast');
+        var bsAlert = new bootstrap.Toast(okToast);
+        bsAlert.show();
+      }
+      else
+      {
+        var errorToast = document.getElementById('settingsSavedErrorToast');
+        var bsAlert = new bootstrap.Toast(errorToast);
+        bsAlert.show();
+      }
+    }
+  }
+  xhr.send(data);
+  
 }
 
 function resetToDefault()
@@ -76,6 +121,12 @@ function rebootDevice()
 {
   httpGet('/reboot');
   location.reload()
+}
+
+var usePassword = false;
+function passwordChanged()
+{
+  usePassword = true;
 }
 
 function includeHTML() {

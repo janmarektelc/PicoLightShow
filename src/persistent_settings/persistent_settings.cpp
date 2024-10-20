@@ -1,8 +1,11 @@
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 #include "string.h"
+#include <vector>
+#include <string>
 
 #include "include/constants.h"
+#include "include/helpers/string_helper.h"
 #include "include/persistent_settings/persistent_settings.h"
 
 #define FLASH_DATA_IDENTIFIER 0x2E
@@ -50,6 +53,31 @@ namespace PicoLightShow
     void PersistentSettings::SetToDefault()
     {
         Settings = GetDefaultSettigns();
+    }
+
+    void PersistentSettings::SetByConfigString(std::string cfg)
+    {
+        //expected data format
+        //~wifiMode(ap=0/client=1)~ssid~passwd~isdhcp(0/1)~ipAddress~ipMask~gwIp~
+        std::vector<std::string> segments = StringHelper::Split(cfg, '~');
+
+        Settings.WifiMode = segments[1] == "0" ? AP : CLIENT;
+        strcpy(Settings.WifiName, segments[2].c_str());
+        if (segments[3] != "*^NotChanged^*")
+        {
+            if (segments[3] == "*^Empty^*")
+                strcpy(Settings.WifiPassword, "");
+            else
+                strcpy(Settings.WifiPassword, segments[3].c_str());
+        }
+        Settings.IsDhcp = segments[4] == "1";
+
+        std::vector<std::string> address = StringHelper::Split(segments[5], '.');
+        Settings.DeviceAddress = convertIpToUint32(atoi(address[0].c_str()), atoi(address[1].c_str()), atoi(address[2].c_str()), atoi(address[3].c_str()));
+        address = StringHelper::Split(segments[6], '.');
+        Settings.NetMask = convertIpToUint32(atoi(address[0].c_str()), atoi(address[1].c_str()), atoi(address[2].c_str()), atoi(address[3].c_str()));
+        address = StringHelper::Split(segments[7], '.');
+        Settings.GatewayAddress= convertIpToUint32(atoi(address[0].c_str()), atoi(address[1].c_str()), atoi(address[2].c_str()), atoi(address[3].c_str()));
     }
 
     int PersistentSettings::GetMemoryPage()

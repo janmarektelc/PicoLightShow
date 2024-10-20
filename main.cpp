@@ -31,7 +31,6 @@ int main()
         return 1;
 
     PicoLightShow::PersistentSettings::Load();
-    //PicoLightShow::PersistentSettings::Save();
 
     multicore_launch_core1(core1_entry);
 

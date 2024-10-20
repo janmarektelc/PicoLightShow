@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string>
 
 namespace PicoLightShow
 {
@@ -35,6 +36,7 @@ namespace PicoLightShow
         static void Save();
         static void Load();
         static void SetToDefault();
+        static void SetByConfigString(std::string cfg);
         static settings Settings;
     
     private:

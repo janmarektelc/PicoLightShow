@@ -43,6 +43,7 @@ add_executable(PicoLightShow
     src/light_effects/light_effect_base.cpp
     src/light_effects/running_point.cpp
     src/light_effects/custom_pattern.cpp
+    src/helpers/string_helper.cpp
     src/persistent_settings/persistent_settings.cpp
     src/www_server/ssi.cpp
     src/www_server/cgi.cpp
