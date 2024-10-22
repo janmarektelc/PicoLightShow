@@ -23,6 +23,7 @@ namespace PicoLightShow
         virtual void Draw();
         virtual void Init();
         virtual void MoveTimeFrame();
+        virtual void SetProperty(char* name, char* value);
         std::vector<Color> ColorPattern;
         int8_t Direction;
         bool PingPong;

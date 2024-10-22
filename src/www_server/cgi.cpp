@@ -17,7 +17,8 @@ namespace PicoLightShow
         {"/switch_effect", cgi_handler_switch_effect},
         {"/configure_runner", cgi_handler_configure_runner},
         {"/reboot", cgi_handler_reboot},
-        {"/reset_to_default", cgi_handler_reset_to_default}};
+        {"/reset_to_default", cgi_handler_reset_to_default},
+        {"/set_effect_property", cgi_handler_set_effect_property}};
 
     const char *cgi_handler_start_effect(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
     {
@@ -78,10 +79,19 @@ namespace PicoLightShow
         return "/success.html";
     }
 
+    const char *cgi_handler_set_effect_property(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+    {
+        for (int i=0; i<iNumParams; i++)
+        {
+            LightShowRunner::SetEffectProperty(pcParam[i], pcValue[i]);
+        }
+        return "/success.html";
+    }
+
     /* Initialize the CGI handler */
     void cgi_init(void)
     {
-        http_set_cgi_handlers(cgi_handlers, 6);
+        http_set_cgi_handlers(cgi_handlers, 7);
     }
 
 } // namespace PicoLightShow

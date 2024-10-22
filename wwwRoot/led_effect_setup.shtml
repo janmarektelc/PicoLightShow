@@ -1,6 +1,6 @@
 <div class="d-flex flex-column">
     <div class="d-sm-inline-flex align-items-center">
-        <select class="form-select" onchange="switchLightEffect(value)">
+        <select class="form-select" id="lightEffectSelect" onchange="switchLightEffect(value)">
             <!--#efflst-->
         </select>
         <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
@@ -11,7 +11,8 @@
             <input type="number" min="1" max="500" value="<!--#ledcnt-->" onchange="setLedCount(value)" />
         </div>
     </div>
-
-
-
+    <div id="effectCustomSetup"></div>
 </div>
+<script>
+    loadSelectedLightEffectConfigPage();
+</script>

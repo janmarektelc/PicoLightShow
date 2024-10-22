@@ -13,6 +13,7 @@ namespace PicoLightShow
     const char *cgi_handler_configure_runner(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
     const char *cgi_handler_reboot(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
     const char *cgi_handler_reset_to_default(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
+    const char *cgi_handler_set_effect_property(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
 
 } // namespace PicoLightShow
 

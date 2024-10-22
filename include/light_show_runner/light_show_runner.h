@@ -33,6 +33,8 @@ namespace PicoLightShow
         static uint32_t GetEffect();
         static void SetEffect(uint32_t effect);
         static std::vector<std::string> GetEffectNames();
+        static std::vector<std::string> GetEffectSetupPages();
+        static void SetEffectProperty(char* name, char* value);
 
     private:
         static LightEffectBase *currentLightEffect;

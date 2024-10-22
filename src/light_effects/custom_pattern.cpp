@@ -1,3 +1,6 @@
+#include "pico/stdlib.h"
+#include "string.h"
+
 #include "include/light_effects/custom_pattern.h"
 
 namespace PicoLightShow
@@ -132,6 +135,23 @@ namespace PicoLightShow
             else
                 time = ledCount - ColorPattern.size() - 1;
         }
+    }
+
+    void CustomPattern::SetProperty(char* name, char* value)
+    {
+        printf("%s = %s\n", name, value);
+        if (strcmp(name, "draw-kind") == 0)
+        {
+            if (strcmp(value, "0") == 0)
+                DrawKind = PatternDrawKind::Once;
+            if (strcmp(value, "1") == 0)
+                DrawKind = PatternDrawKind::Repeat;
+            if (strcmp(value, "2") == 0)
+                DrawKind = PatternDrawKind::Stretch;
+        }
+
+        Draw();
+        sleep_ms(5);
     }
 
 } // namespace PicoLightShow

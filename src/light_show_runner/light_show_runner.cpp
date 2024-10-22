@@ -171,4 +171,23 @@ namespace PicoLightShow
         return vect;
     }
 
+    std::vector<std::string> LightShowRunner::GetEffectSetupPages()
+    {
+        int arraySize = sizeof(LighShowEffectDescriptors) / sizeof(LighShowEffectDescriptors[0]); 
+        std::vector<std::string> vect;
+        for (int i=0; i<arraySize; i++)
+        {
+            vect.push_back(LighShowEffectDescriptors[i].SetupPage);
+        }
+        return vect;
+    }
+
+    void LightShowRunner::SetEffectProperty(char* name, char* value)
+    {
+        if (currentLightEffect)
+        {
+            currentLightEffect->SetProperty(name, value);
+        }
+    }
+
 } // namespace PicoLightShow

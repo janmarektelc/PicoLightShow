@@ -37,4 +37,9 @@ namespace PicoLightShow
     {
     }
 
+    void RunningPoint::SetProperty(char* name, char* value)
+    {
+        
+    }
+
 } // namespace PicoLightShow

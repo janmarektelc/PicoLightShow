@@ -13,7 +13,7 @@ namespace PicoLightShow
 
     // Max length of the tags defaults to be 8 chars
     // LWIP_HTTPD_MAX_TAG_NAME_LEN
-    const char *__not_in_flash("httpd") ssi_example_tags[] = {
+    const char *__not_in_flash("httpd") ssi_tags[] = {
         "running",   // 0
         "delay", // 1
         "bright", // 2
@@ -60,11 +60,12 @@ namespace PicoLightShow
         case 3: /* "efflst"*/
         {
             std::vector<std::string> effectNames = LightShowRunner::GetEffectNames();
+            std::vector<std::string> setupPages = LightShowRunner::GetEffectSetupPages();
             int currentEffect = LightShowRunner::GetEffect();
             std::string effectsList = "";
             for (int i=0; i<effectNames.size(); i++)
             {
-                effectsList += "<option value=\""+std::to_string(i)+"\""; 
+                effectsList += "<option value=\""+std::to_string(i)+"\" data-setup-page=\""+setupPages[i]+"\""; 
                 if (i==currentEffect)
                     effectsList += " selected=\"selected\"";
                 effectsList += ">"+effectNames[i]+"</option>";
@@ -174,13 +175,13 @@ namespace PicoLightShow
 
     void ssi_init()
     {
-        for (size_t i = 0; i < LWIP_ARRAYSIZE(ssi_example_tags); i++)
+        for (size_t i = 0; i < LWIP_ARRAYSIZE(ssi_tags); i++)
         {
             LWIP_ASSERT("tag too long for LWIP_HTTPD_MAX_TAG_NAME_LEN",
-                        strlen(ssi_example_tags[i]) <= LWIP_HTTPD_MAX_TAG_NAME_LEN);
+                        strlen(ssi_tags[i]) <= LWIP_HTTPD_MAX_TAG_NAME_LEN);
         }
 
-        http_set_ssi_handler(ssi_handler, ssi_example_tags, LWIP_ARRAYSIZE(ssi_example_tags));
+        http_set_ssi_handler(ssi_handler, ssi_tags, LWIP_ARRAYSIZE(ssi_tags));
     }
 
 } // namespace PicoLightShow

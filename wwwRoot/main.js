@@ -46,8 +46,18 @@ function setLedCount(ledCount)
 function switchLightEffect(effect)
 {
   httpGet('/switch_effect?effect='+effect);
+  loadSelectedLightEffectConfigPage();
 }
 
+function loadSelectedLightEffectConfigPage()
+{
+  effectSelection = document.getElementById("lightEffectSelect");
+  setupPage = effectSelection.options[effectSelection.selectedIndex].getAttribute("data-setup-page")
+  if (setupPage)
+  {
+    loadAndPlaceHTML(setupPage, document.getElementById("effectCustomSetup"));
+  }
+}
 
 function ipConfigAvailabilityReDraw()
 {
@@ -129,30 +139,54 @@ function passwordChanged()
   usePassword = true;
 }
 
-function includeHTML() {
-    var z, i, elmnt, file, xhttp;
-    /* Loop through a collection of all HTML elements: */
-    z = document.getElementsByTagName("*");
-    for (i = 0; i < z.length; i++) {
-      elmnt = z[i];
-      /*search for elements with a certain atrribute:*/
-      file = elmnt.getAttribute("include-html");
-      if (file) {
-        /* Make an HTTP request using the attribute value as the file name: */
-        xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-          if (this.readyState == 4) {
-            if (this.status == 200) {elmnt.innerHTML = this.responseText;}
-            if (this.status == 404) {elmnt.innerHTML = "Page not found.";}
-            /* Remove the attribute, and call this function once more: */
-            elmnt.removeAttribute("include-html");
-            includeHTML();
-          }
-        }
-        xhttp.open("GET", file, true);
-        xhttp.send();
-        /* Exit the function: */
-        return;
+function loadAndPlaceHTML(fileName, element)
+{    
+  if (fileName) {
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4) {
+        if (this.status == 200) { element.innerHTML = this.responseText; }
+        else { element.innerHTML = ""; }
       }
     }
+    xhttp.open("GET", fileName, true);
+    xhttp.send();
   }
+
+}
+
+function includeHTML() 
+{
+  var z, i, elmnt, file, xhttp;
+  /* Loop through a collection of all HTML elements: */
+  z = document.getElementsByTagName("*");
+  for (i = 0; i < z.length; i++) {
+    elmnt = z[i];
+    /*search for elements with a certain atrribute:*/
+    file = elmnt.getAttribute("include-html");
+    if (file) {
+      /* Make an HTTP request using the attribute value as the file name: */
+      xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            elmnt.innerHTML = this.responseText; 
+            var scripts = elmnt.getElementsByTagName("script"); 
+            for (i = 0; i < scripts.length; i++)
+            {
+              eval(scripts[i].innerText);
+            }
+          }
+          if (this.status == 404) {elmnt.innerHTML = "Page not found.";}
+          /* Remove the attribute, and call this function once more: */
+          elmnt.removeAttribute("include-html");
+          includeHTML();
+        }
+      }
+      xhttp.open("GET", file, true);
+      xhttp.send();
+      /* Exit the function: */
+      return;
+    }
+  }
+}
