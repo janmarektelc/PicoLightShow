@@ -149,9 +149,25 @@ namespace PicoLightShow
             if (strcmp(value, "2") == 0)
                 DrawKind = PatternDrawKind::Stretch;
         }
+        if (strcmp(name, "ping-pong") == 0)
+        {
+            PingPong = strcmp(value, "1") == 0;
+        }
+        if (strcmp(name, "direction") == 0)
+        {
+            Direction = strcmp(value, "1") == 0 ? 1 : -1;
+        }
 
         Draw();
         sleep_ms(5);
+    }
+
+    std::string CustomPattern::GetConfigurationString()
+    {
+        return "draw-kind="+std::to_string((int)DrawKind)
+            +"&ping-pong="+std::to_string((int)PingPong)
+            +"&direction="+(Direction==1?"1":"0")
+        ;
     }
 
 } // namespace PicoLightShow

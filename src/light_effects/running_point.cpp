@@ -42,4 +42,9 @@ namespace PicoLightShow
         
     }
 
+    std::string RunningPoint::GetConfigurationString()
+    {
+        return "";
+    }
+
 } // namespace PicoLightShow

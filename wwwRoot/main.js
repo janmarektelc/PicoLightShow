@@ -145,7 +145,14 @@ function loadAndPlaceHTML(fileName, element)
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
       if (this.readyState == 4) {
-        if (this.status == 200) { element.innerHTML = this.responseText; }
+        if (this.status == 200) { 
+          element.innerHTML = this.responseText; 
+          var scripts = element.getElementsByTagName("script"); 
+          for (i = 0; i < scripts.length; i++)
+          {
+            eval(scripts[i].innerText);
+          }
+        }
         else { element.innerHTML = ""; }
       }
     }

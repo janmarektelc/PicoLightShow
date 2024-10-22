@@ -190,4 +190,12 @@ namespace PicoLightShow
         }
     }
 
+    std::string LightShowRunner::GetEffectConfigurationString()
+    {
+        if (currentLightEffect)
+            return currentLightEffect->GetConfigurationString();
+        
+        return "";
+    }
+
 } // namespace PicoLightShow

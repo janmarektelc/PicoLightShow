@@ -34,6 +34,7 @@ namespace PicoLightShow
         "gw2", //17
         "gw3", //18
         "gw4", //19
+        "effcfg", //20
     };
 
     u16_t __time_critical_func(ssi_handler)(int iIndex, char *pcInsert, int iInsertLen)
@@ -164,6 +165,9 @@ namespace PicoLightShow
             printed = snprintf(pcInsert, iInsertLen, "%i", (PersistentSettings::Settings.GatewayAddress >> 24) & 0xFF);
             break;
         }
+        case 20: /* "effcfg" */
+            printed = snprintf(pcInsert, iInsertLen, "%s", LightShowRunner::GetEffectConfigurationString().c_str());
+            break;
         break;
         default: /* unknown tag */
             printed = 0;

@@ -24,6 +24,7 @@ namespace PicoLightShow
         virtual void Init();
         virtual void MoveTimeFrame();
         virtual void SetProperty(char* name, char* value);
+        virtual std::string GetConfigurationString();
         std::vector<Color> ColorPattern;
         int8_t Direction;
         bool PingPong;

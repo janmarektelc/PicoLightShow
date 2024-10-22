@@ -8,10 +8,71 @@
         </div>
     </div>
     <div class="col-sm-8">
-        <select class="form-select" onchange="httpGet('/set_effect_property?draw-kind='+value)">
+        <select class="form-select" id="eff-cfg-draw-kind" onchange="httpGet('/set_effect_property?draw-kind='+value)">
             <option value="0">Once</option>
             <option value="1">Repeat</option>
             <option value="2">Stretch</option>
         </select>
     </div>
 </div>
+
+<div class="row align-items-center mt-2">
+    <div class="col-sm-4">
+        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/>
+              </svg>
+            <div class="mx-2 text-nowrap">Ping pong</div>
+        </div>
+    </div>
+    <div class="col-sm-8">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="eff-cfg-ping-pong" onchange="httpGet('/set_effect_property?ping-pong='+(checked?1:0)+'&direction='+document.getElementById('eff-cfg-direction').value)" />
+        </div>
+    </div>
+</div>
+
+<div class="row align-items-center mt-2">
+    <div class="col-sm-4">
+        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-signpost-split-fill" viewBox="0 0 16 16">
+                <path d="M7 16h2V6h5a1 1 0 0 0 .8-.4l.975-1.3a.5.5 0 0 0 0-.6L14.8 2.4A1 1 0 0 0 14 2H9v-.586a1 1 0 0 0-2 0V7H2a1 1 0 0 0-.8.4L.225 8.7a.5.5 0 0 0 0 .6l.975 1.3a1 1 0 0 0 .8.4h5z"/>
+              </svg>
+            <div class="mx-2 text-nowrap">Direction</div>
+        </div>
+    </div>
+    <div class="col-sm-8">
+        <select class="form-select" id="eff-cfg-direction" onchange="httpGet('/set_effect_property?direction='+value)">
+            <option value="0">Left</option>
+            <option value="1">Right</option>
+        </select>
+    </div>
+</div>
+
+<script>
+    function setProperty(name, value)
+    {
+        var elm = document.getElementById("eff-cfg-"+name);
+        if (elm)
+        {
+            if (name == "ping-pong")
+            {
+                elm.checked = value;
+            }
+            else
+            {
+                elm.value = value;
+            }
+        }
+    }
+
+    function configureEffectSettingsDialog(cfg){
+        properties = cfg.split('&');
+        for (i = 0; i < properties.length; i++)
+        {
+            property = properties[i].split('=');   
+            setProperty(property[0], property[1]);
+        }
+    }
+    configureEffectSettingsDialog('<!--#effcfg-->');
+</script>

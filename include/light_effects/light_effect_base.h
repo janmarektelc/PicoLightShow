@@ -2,6 +2,7 @@
 #define PICO_LIGHT_SHOW_LIGHT_EFFECT_BASE_H_
 
 #include <stdint.h>
+#include <string>
 
 #include "include/types.h"
 #include "include/constants.h"
@@ -22,6 +23,7 @@ namespace PicoLightShow
         virtual uint32_t GetLedCount();
         virtual void SetLedCount(uint32_t ledCount);
         virtual void SetProperty(char* name, char* value) = 0;
+        virtual std::string GetConfigurationString() = 0;
 
     protected:
         void PutPixel(uint8_t r, uint8_t g, uint8_t b);
