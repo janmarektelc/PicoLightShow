@@ -1,6 +1,7 @@
 #include "pico/stdlib.h"
 #include "string.h"
 
+#include "include/helpers/string_helper.h"
 #include "include/light_effects/custom_pattern.h"
 
 namespace PicoLightShow
@@ -139,7 +140,6 @@ namespace PicoLightShow
 
     void CustomPattern::SetProperty(char* name, char* value)
     {
-        printf("%s = %s\n", name, value);
         if (strcmp(name, "draw-kind") == 0)
         {
             if (strcmp(value, "0") == 0)
@@ -157,6 +157,15 @@ namespace PicoLightShow
         {
             Direction = strcmp(value, "1") == 0 ? 1 : -1;
         }
+        if (strcmp(name, "colors") == 0)
+        {
+            std::vector<std::string> colors = StringHelper::Split(value, ',');
+            ColorPattern.clear();
+            for (int i = 0; i < colors.size(); i++)
+            {
+                ColorPattern.push_back(Color(StringHelper::HexStringToUint32(colors[i])));
+            }
+        }
 
         Draw();
         sleep_ms(5);
@@ -167,6 +176,7 @@ namespace PicoLightShow
         return "draw-kind="+std::to_string((int)DrawKind)
             +"&ping-pong="+std::to_string((int)PingPong)
             +"&direction="+(Direction==1?"1":"0")
+            +"&colors="+StringHelper::ColorsToString(ColorPattern)
         ;
     }
 
