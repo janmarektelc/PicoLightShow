@@ -5,6 +5,7 @@
 #include "ws2812.pio.h"
 
 #include "include/light_effects/running_point.h"
+#include "include/light_effects/jans_ping_pong.h"
 #include "include/light_effects/custom_pattern.h"
 #include "include/persistent_settings/persistent_settings.h"
 
@@ -13,7 +14,7 @@
 namespace PicoLightShow
 {
     LighShowEffectDescriptor LightShowRunner::LighShowEffectDescriptors[] = {
-        {"RunningPoint", "running_point_setup.shtml", CreateRunningPoint},
+        {"Jan's ping pong", "jans_ping_pong_setup.shtml", CreateJansPingPong},
         {"CustomPattern", "custom_pattern_setup.shtml", CreateCustomPattern},
         {"CustomPattern1", "custom_pattern_setup.shtml", CreateCustomPattern1},
         {"CustomPattern2", "custom_pattern_setup.shtml", CreateCustomPattern2},
@@ -24,6 +25,11 @@ namespace PicoLightShow
     LightEffectBase *LightShowRunner::CreateRunningPoint()
     {
         return new RunningPoint();
+    }
+
+    LightEffectBase *LightShowRunner::CreateJansPingPong()
+    {
+        return new JansPingPong();
     }
 
     LightEffectBase *LightShowRunner::CreateCustomPattern()

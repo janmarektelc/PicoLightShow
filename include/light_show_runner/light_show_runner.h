@@ -42,6 +42,7 @@ namespace PicoLightShow
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
 
         static LightEffectBase *CreateRunningPoint();
+        static LightEffectBase *CreateJansPingPong();
         static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateCustomPattern1();
         static LightEffectBase *CreateCustomPattern2();
