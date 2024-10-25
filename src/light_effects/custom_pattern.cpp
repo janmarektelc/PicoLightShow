@@ -29,7 +29,12 @@ namespace PicoLightShow
 
     void CustomPattern::MoveTimeFrame()
     {
-        MoveTimeFrameStretch();
+        if (DrawKind == PatternDrawKind::Once)
+            MoveTimeFrameOnce();
+        else if (DrawKind == PatternDrawKind::Repeat)
+            MoveTimeFrameRepeat();
+        else if (DrawKind == PatternDrawKind::Stretch)
+            MoveTimeFrameStretch();
     }
 
     void CustomPattern::Init()
@@ -38,13 +43,12 @@ namespace PicoLightShow
 
     void CustomPattern::DrawRepeat()
     {
-        printf("time: %i \n", time);
         for (int i = 0; i < ledCount; i++)
         {
-            int patternIndex = (i % ColorPattern.size()) + time;
+            int patternIndex = (i % ColorPattern.size()) - time;
 
-            if (patternIndex >= ColorPattern.size())
-                patternIndex -= ColorPattern.size();
+            if (patternIndex < 0)
+                patternIndex += ColorPattern.size();
 
             if (patternIndex < ColorPattern.size())
                 PutPixel(ColorPattern.at(patternIndex));
@@ -75,10 +79,10 @@ namespace PicoLightShow
     {
         for (int i = 0; i < ledCount; i++)
         {
-            // do color pattern movement
-            int patternIndex = (float)(i + time) / ((float)ledCount / ColorPattern.size());
-            if (patternIndex > ColorPattern.size() - 1)
-                patternIndex = patternIndex - (ColorPattern.size());
+            int x = i - time;
+            if (x < 0)
+                x +=ledCount;
+            int patternIndex = (float)(x) / ((float)ledCount / ColorPattern.size()); //zero time state
 
             if (patternIndex < ColorPattern.size())
                 PutPixel(ColorPattern.at(patternIndex));
@@ -88,7 +92,7 @@ namespace PicoLightShow
     void CustomPattern::MoveTimeFrameStretch()
     {
         time += Direction;
-        if (time >= ledCount)
+        if (time >= ledCount - 1)
         {
             if (PingPong)
                 Direction *= -1;
@@ -148,6 +152,7 @@ namespace PicoLightShow
                 DrawKind = PatternDrawKind::Repeat;
             if (strcmp(value, "2") == 0)
                 DrawKind = PatternDrawKind::Stretch;
+            time = 0;
         }
         if (strcmp(name, "ping-pong") == 0)
         {
@@ -165,6 +170,7 @@ namespace PicoLightShow
             {
                 ColorPattern.push_back(Color(StringHelper::HexStringToUint32(colors[i])));
             }
+            time = 0;
         }
 
         Draw();
