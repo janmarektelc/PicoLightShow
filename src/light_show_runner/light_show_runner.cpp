@@ -7,6 +7,7 @@
 #include "include/light_effects/running_point.h"
 #include "include/light_effects/jans_ping_pong.h"
 #include "include/light_effects/custom_pattern.h"
+#include "include/light_effects/color_change.h"
 #include "include/persistent_settings/persistent_settings.h"
 
 #include "include/light_show_runner/light_show_runner.h"
@@ -19,6 +20,7 @@ namespace PicoLightShow
         {"Running colors", "custom_pattern_setup.shtml", CreateRunningColors},
         {"Running colors 1", "custom_pattern_setup.shtml", CreateRunningColors1},
         {"Snakes", "custom_pattern_setup.shtml", CreateSnakes},
+        {"Color change", "", CreateColorChange},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
@@ -65,6 +67,15 @@ namespace PicoLightShow
         customPattern->PingPong = false;
 
         return customPattern;
+    }
+
+    LightEffectBase *LightShowRunner::CreateColorChange()
+    {
+        ColorChange *colorChange = new ColorChange();
+        //colorChange->Colors = {Color(0,10,0), Color(0,255,0), Color(255,0,0), Color(0,10,0)};
+        colorChange->Colors = {Color(0,100,0), Color(0,255,0), Color(0,100,0)};
+
+        return colorChange;
     }
 
     void LightShowRunner::Init()

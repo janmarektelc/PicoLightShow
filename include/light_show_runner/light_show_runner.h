@@ -46,6 +46,7 @@ namespace PicoLightShow
         static LightEffectBase *CreateRunningColors();
         static LightEffectBase *CreateRunningColors1();
         static LightEffectBase *CreateSnakes();
+        static LightEffectBase *CreateColorChange();
     };
 
 } // namespace PicoLightShow
