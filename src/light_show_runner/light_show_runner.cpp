@@ -20,7 +20,8 @@ namespace PicoLightShow
         {"Running colors", "custom_pattern_setup.shtml", CreateRunningColors},
         {"Running colors 1", "custom_pattern_setup.shtml", CreateRunningColors1},
         {"Snakes", "custom_pattern_setup.shtml", CreateSnakes},
-        {"Color change", "", CreateColorChange},
+        {"Color change", "change_color_setup.shtml", CreateColorChange},
+        {"Breath", "change_color_setup.shtml", CreateBreath},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
@@ -72,13 +73,20 @@ namespace PicoLightShow
     LightEffectBase *LightShowRunner::CreateColorChange()
     {
         ColorChange *colorChange = new ColorChange();
-        //colorChange->Colors = {Color(0,10,0), Color(0,255,0), Color(255,0,0), Color(0,10,0)};
-        colorChange->Colors = {Color(0,100,0), Color(0,255,0), Color(0,100,0)};
+        colorChange->Colors = {Color(100,0,0), Color(255,0,0), Color(0,100,0), Color(0,255,0), Color(0,0,100), Color(0,0,255)};
 
         return colorChange;
     }
 
-    void LightShowRunner::Init()
+    LightEffectBase *LightShowRunner::CreateBreath()
+    {
+        ColorChange *colorChange = new ColorChange();
+        colorChange->Colors = {Color(100,0,0), Color(255,0,0)};
+
+        return colorChange;
+    }
+
+        void LightShowRunner::Init()
     {
         uint offset = pio_add_program(WS_PIO_INSTANCE, &ws2812_program);
         ws2812_program_init(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX, offset, WS2812_PIN, 800000, IS_RGBW);
