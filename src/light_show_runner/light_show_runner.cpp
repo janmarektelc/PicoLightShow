@@ -14,17 +14,22 @@
 namespace PicoLightShow
 {
     LighShowEffectDescriptor LightShowRunner::LighShowEffectDescriptors[] = {
-        {"Jan's ping pong", "jans_ping_pong_setup.shtml", CreateJansPingPong},
-        {"CustomPattern", "custom_pattern_setup.shtml", CreateCustomPattern},
-        {"CustomPattern1", "custom_pattern_setup.shtml", CreateCustomPattern1},
-        {"CustomPattern2", "custom_pattern_setup.shtml", CreateCustomPattern2},
+        {"Jan's ping pong", "", CreateJansPingPong},
+        {"Running point", "custom_pattern_setup.shtml", CreateRunningPoint},
+        {"Running colors", "custom_pattern_setup.shtml", CreateRunningColors},
+        {"Running colors 1", "custom_pattern_setup.shtml", CreateRunningColors1},
+        {"Snakes", "custom_pattern_setup.shtml", CreateSnakes},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
 
     LightEffectBase *LightShowRunner::CreateRunningPoint()
     {
-        return new RunningPoint();
+        CustomPattern *customPattern = new CustomPattern();
+        customPattern->ColorPattern = { Color(255,0,0) };
+        customPattern->DrawKind = PatternDrawKind::Once;
+
+        return customPattern;
     }
 
     LightEffectBase *LightShowRunner::CreateJansPingPong()
@@ -32,7 +37,7 @@ namespace PicoLightShow
         return new JansPingPong();
     }
 
-    LightEffectBase *LightShowRunner::CreateCustomPattern()
+    LightEffectBase *LightShowRunner::CreateRunningColors()
     {
         CustomPattern *customPattern = new CustomPattern();
         customPattern->ColorPattern = {Color(255, 0, 0), Color(255, 255, 0), Color(0, 255, 0), Color(0, 255, 255), Color(0, 0, 255), Color(255, 0, 255)};
@@ -41,20 +46,23 @@ namespace PicoLightShow
         return customPattern;
     }
 
-    LightEffectBase *LightShowRunner::CreateCustomPattern1()
-    {
-        CustomPattern *customPattern = new CustomPattern();
-        customPattern->ColorPattern = { Color(0,255,0), Color(255,0,0), Color(255,0,0), Color(0,255,0)};
-        customPattern->DrawKind = PatternDrawKind::Once;
-
-        return customPattern;
-    }
-
-    LightEffectBase *LightShowRunner::CreateCustomPattern2()
+    LightEffectBase *LightShowRunner::CreateRunningColors1()
     {
         CustomPattern *customPattern = new CustomPattern();
         customPattern->ColorPattern = {Color(255, 0, 0), Color(255, 255, 0), Color(0, 255, 0), Color(0, 255, 255), Color(0, 0, 255), Color(255, 0, 255)};
         customPattern->DrawKind = PatternDrawKind::Repeat;
+        customPattern->PingPong = false;
+        customPattern->Direction = 1;
+
+        return customPattern;
+    }
+
+    LightEffectBase *LightShowRunner::CreateSnakes()
+    {
+        CustomPattern *customPattern = new CustomPattern();
+        customPattern->ColorPattern = {Color(255, 0, 0), Color(0, 0, 0), Color(0, 255, 0), Color(0, 0, 0), Color(0, 0, 255), Color(0, 0, 0)};
+        customPattern->DrawKind = PatternDrawKind::Stretch;
+        customPattern->PingPong = false;
 
         return customPattern;
     }
@@ -73,16 +81,16 @@ namespace PicoLightShow
         if (!PersistentSettings::Settings.IsRunning)
         {
             currentLightEffect->Draw();
-            sleep_ms(5);
+            sleep_ms(MINIMAL_REDRAW_DELAY);
         }
     }
 
     void LightShowRunner::Pool()
     {
         if (PersistentSettings::Settings.IsRunning)
-        {
+        {          
+            currentLightEffect->MoveTimeFrame(); 
             currentLightEffect->Draw();
-            currentLightEffect->MoveTimeFrame();
         }
         sleep_ms(PersistentSettings::Settings.Delay);
     }
@@ -138,7 +146,7 @@ namespace PicoLightShow
         if (!PersistentSettings::Settings.IsRunning)
         {
             currentLightEffect->Draw();
-            sleep_ms(5);
+            sleep_ms(MINIMAL_REDRAW_DELAY);
         }
     }
 
@@ -161,7 +169,7 @@ namespace PicoLightShow
         if (!PersistentSettings::Settings.IsRunning)
         {
             currentLightEffect->Draw();
-            sleep_ms(5);
+            sleep_ms(MINIMAL_REDRAW_DELAY);
         }
     }
 

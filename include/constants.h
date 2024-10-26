@@ -3,6 +3,7 @@
 
 #define WS2812_PIN 2
 #define IS_RGBW false
+#define MINIMAL_REDRAW_DELAY 1
 #define WS_STATE_MACHINE_INDEX 0
 #define WS_PIO_INSTANCE pio0_hw
 

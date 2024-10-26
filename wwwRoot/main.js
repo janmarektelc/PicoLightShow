@@ -57,6 +57,10 @@ function loadSelectedLightEffectConfigPage()
   {
     loadAndPlaceHTML(setupPage, document.getElementById("effectCustomSetup"));
   }
+  else
+  {
+    document.getElementById("effectCustomSetup").innerHTML='';
+  }
 }
 
 function ipConfigAvailabilityReDraw()
@@ -208,7 +212,7 @@ function setProperty(name, value) {
   var elm = document.getElementById("eff-cfg-" + name);
   if (elm) {
     if (name == "ping-pong") {
-      elm.checked = value;
+      elm.checked = value == 1;
     }
     else {
       elm.value = value;
