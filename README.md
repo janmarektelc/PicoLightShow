@@ -18,6 +18,9 @@
 - **Communication:** Wi-Fi (as an access point or connect to Wi-Fi network)
 - **Web Server:** Hosted on the Raspberry Pi Pico, accessible via a web browser
 
+## Download
+To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.1.uf2).
+
 ## Hardware Setup
 
 For detailed instructions on how to wire the LED strip to the Raspberry Pi, please refer to the [Hardware Setup](hardware_setup.md). 

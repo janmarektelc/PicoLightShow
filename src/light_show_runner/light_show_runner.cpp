@@ -15,13 +15,13 @@
 namespace PicoLightShow
 {
     LighShowEffectDescriptor LightShowRunner::LighShowEffectDescriptors[] = {
-        {"Jan's ping pong", "", CreateJansPingPong},
         {"Running point", "custom_pattern_setup.shtml", CreateRunningPoint},
         {"Running colors", "custom_pattern_setup.shtml", CreateRunningColors},
         {"Running colors 1", "custom_pattern_setup.shtml", CreateRunningColors1},
         {"Snakes", "custom_pattern_setup.shtml", CreateSnakes},
         {"Color change", "change_color_setup.shtml", CreateColorChange},
         {"Breath", "change_color_setup.shtml", CreateBreath},
+        //{"Jan's ping pong", "", CreateJansPingPong},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;

@@ -1,12 +1,12 @@
-## Connecting to PicoLightShow via Wi-Fi
+# <img src="icon.png" width="30"> Connecting to PicoLightShow via Wi-Fi
 
-### Default Settings:
+## Default Settings:
 
 1. **Access Point:**
    - By default, the Raspberry Pi Pico creates a Wi-Fi access point named **PicoLightShow**.
    - The password for the access point is **123456789**.
 
-### Connection Steps:
+## Connection Steps:
 
 1. **Connect to the Access Point:**
    - On your device (phone, tablet, computer), open the list of available Wi-Fi networks.
@@ -23,7 +23,7 @@
    - Enter the name and password of your Wi-Fi network and confirm the settings.
    - The Raspberry Pi Pico will now connect to your home Wi-Fi network and be accessible within that network.
 
-### Notes:
+## Notes:
 
 - Ensure your device is within range of the Raspberry Pi Pico's Wi-Fi signal.
 - If you encounter connection issues, double-check the password and network name.
