@@ -14,7 +14,7 @@ namespace PicoLightShow
         virtual void Draw();
         virtual void Init();
         virtual void MoveTimeFrame();
-        virtual void SetProperty(char* name, char* value);
+        virtual void SetProperty(const char* name, const char* value);
         virtual std::string GetConfigurationString();
     };
 

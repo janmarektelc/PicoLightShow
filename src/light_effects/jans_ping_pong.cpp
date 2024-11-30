@@ -40,7 +40,7 @@ namespace PicoLightShow
     {
     }
 
-    void JansPingPong::SetProperty(char* name, char* value)
+    void JansPingPong::SetProperty(const char* name, const char* value)
     {
         
     }

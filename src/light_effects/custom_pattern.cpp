@@ -142,7 +142,7 @@ namespace PicoLightShow
         }
     }
 
-    void CustomPattern::SetProperty(char* name, char* value)
+    void CustomPattern::SetProperty(const char* name, const char* value)
     {
         if (strcmp(name, "draw-kind") == 0)
         {

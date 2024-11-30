@@ -61,7 +61,7 @@ namespace PicoLightShow
         Blue = c1.Blue;
     }
 
-    void ColorChange::SetProperty(char* name, char* value)
+    void ColorChange::SetProperty(const char* name, const char* value)
     {
         if (strcmp(name, "colors") == 0)
         {

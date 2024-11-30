@@ -32,7 +32,7 @@ namespace PicoLightShow
             .GatewayAddress = convertIpToUint32(0,0,0,0),
             .IsRunning = false,
             .Delay = 10,
-            .EffectIndex = 1,
+            .EffectIndex = 0,
             .LedCount = 20,
             .Brightness = 50
         }; 

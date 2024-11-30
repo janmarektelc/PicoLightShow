@@ -13,6 +13,7 @@ namespace PicoLightShow
         std::string EffectName;
         std::string SetupPage;
         LightEffectBase *(*GetInstance)();
+        std::string Parameters;
     };
 
     class LightShowRunner
@@ -40,14 +41,11 @@ namespace PicoLightShow
     private:
         static LightEffectBase *currentLightEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
+        static void SetEffectConfigurationString(std::string config);
 
-        static LightEffectBase *CreateRunningPoint();
-        static LightEffectBase *CreateJansPingPong();
-        static LightEffectBase *CreateRunningColors();
-        static LightEffectBase *CreateRunningColors1();
-        static LightEffectBase *CreateSnakes();
+        static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateColorChange();
-        static LightEffectBase *CreateBreath();
+        static LightEffectBase *CreateJansPingPong();
     };
 
 } // namespace PicoLightShow

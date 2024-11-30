@@ -9,30 +9,33 @@
 #include "include/light_effects/custom_pattern.h"
 #include "include/light_effects/color_change.h"
 #include "include/persistent_settings/persistent_settings.h"
+#include "include/helpers/string_helper.h"
 
 #include "include/light_show_runner/light_show_runner.h"
 
 namespace PicoLightShow
 {
     LighShowEffectDescriptor LightShowRunner::LighShowEffectDescriptors[] = {
-        {"Running point", "custom_pattern_setup.shtml", CreateRunningPoint},
-        {"Running colors", "custom_pattern_setup.shtml", CreateRunningColors},
-        {"Running colors 1", "custom_pattern_setup.shtml", CreateRunningColors1},
-        {"Snakes", "custom_pattern_setup.shtml", CreateSnakes},
-        {"Color change", "change_color_setup.shtml", CreateColorChange},
-        {"Breath", "change_color_setup.shtml", CreateBreath},
-        //{"Jan's ping pong", "", CreateJansPingPong},
+        {"Running point", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=0&ping-pong=1&direction=1&colors=ff0000"},
+        {"Running colors", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=2&ping-pong=1&direction=0&colors=ff0000,ffff00,00ff00,00ffff,0000ff,ff00ff"},
+        {"Running colors 1", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=1&ping-pong=0&direction=1&colors=ff0000,ffff00,00ff00,00ffff,0000ff,ff00ff"},
+        {"Snakes", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=2&ping-pong=0&direction=0&colors=ff0000,000000,00ff00,000000,0000ff,000000"},
+        {"Color change", "change_color_setup.shtml", CreateColorChange, "colors=640000,ff0000,006400,00ff00,000064,0000ff"},
+        {"Breath", "change_color_setup.shtml", CreateColorChange, "colors=640000,ff0000"},
+        // {"Jan's ping pong", "", CreateJansPingPong, ""},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
 
-    LightEffectBase *LightShowRunner::CreateRunningPoint()
-    {
-        CustomPattern *customPattern = new CustomPattern();
-        customPattern->ColorPattern = { Color(255,0,0) };
-        customPattern->DrawKind = PatternDrawKind::Once;
 
-        return customPattern;
+    LightEffectBase *LightShowRunner::CreateCustomPattern()
+    {
+        return new CustomPattern();
+    }
+
+    LightEffectBase *LightShowRunner::CreateColorChange()
+    {
+        return new ColorChange();
     }
 
     LightEffectBase *LightShowRunner::CreateJansPingPong()
@@ -40,53 +43,7 @@ namespace PicoLightShow
         return new JansPingPong();
     }
 
-    LightEffectBase *LightShowRunner::CreateRunningColors()
-    {
-        CustomPattern *customPattern = new CustomPattern();
-        customPattern->ColorPattern = {Color(255, 0, 0), Color(255, 255, 0), Color(0, 255, 0), Color(0, 255, 255), Color(0, 0, 255), Color(255, 0, 255)};
-        customPattern->DrawKind = PatternDrawKind::Stretch;
-
-        return customPattern;
-    }
-
-    LightEffectBase *LightShowRunner::CreateRunningColors1()
-    {
-        CustomPattern *customPattern = new CustomPattern();
-        customPattern->ColorPattern = {Color(255, 0, 0), Color(255, 255, 0), Color(0, 255, 0), Color(0, 255, 255), Color(0, 0, 255), Color(255, 0, 255)};
-        customPattern->DrawKind = PatternDrawKind::Repeat;
-        customPattern->PingPong = false;
-        customPattern->Direction = 1;
-
-        return customPattern;
-    }
-
-    LightEffectBase *LightShowRunner::CreateSnakes()
-    {
-        CustomPattern *customPattern = new CustomPattern();
-        customPattern->ColorPattern = {Color(255, 0, 0), Color(0, 0, 0), Color(0, 255, 0), Color(0, 0, 0), Color(0, 0, 255), Color(0, 0, 0)};
-        customPattern->DrawKind = PatternDrawKind::Stretch;
-        customPattern->PingPong = false;
-
-        return customPattern;
-    }
-
-    LightEffectBase *LightShowRunner::CreateColorChange()
-    {
-        ColorChange *colorChange = new ColorChange();
-        colorChange->Colors = {Color(100,0,0), Color(255,0,0), Color(0,100,0), Color(0,255,0), Color(0,0,100), Color(0,0,255)};
-
-        return colorChange;
-    }
-
-    LightEffectBase *LightShowRunner::CreateBreath()
-    {
-        ColorChange *colorChange = new ColorChange();
-        colorChange->Colors = {Color(100,0,0), Color(255,0,0)};
-
-        return colorChange;
-    }
-
-        void LightShowRunner::Init()
+    void LightShowRunner::Init()
     {
         uint offset = pio_add_program(WS_PIO_INSTANCE, &ws2812_program);
         ws2812_program_init(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX, offset, WS2812_PIN, 800000, IS_RGBW);
@@ -94,6 +51,8 @@ namespace PicoLightShow
         currentLightEffect = LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].GetInstance();
         currentLightEffect->SetLedCount(PersistentSettings::Settings.LedCount);
         currentLightEffect->SetBrightness(PersistentSettings::Settings.Brightness);
+
+        SetEffectConfigurationString(LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters);
 
         currentLightEffect->Init();
         
@@ -176,12 +135,16 @@ namespace PicoLightShow
 
     void LightShowRunner::SetEffect(uint32_t effect)
     {
+        LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters = currentLightEffect->GetConfigurationString();
+
         PersistentSettings::Settings.EffectIndex = effect;
         delete currentLightEffect;
 
         currentLightEffect = LighShowEffectDescriptors[effect].GetInstance();
         currentLightEffect->SetLedCount(PersistentSettings::Settings.LedCount);
         currentLightEffect->SetBrightness(PersistentSettings::Settings.Brightness);
+
+        SetEffectConfigurationString(LighShowEffectDescriptors[effect].Parameters);
 
         currentLightEffect->Init();
 
@@ -229,6 +192,19 @@ namespace PicoLightShow
             return currentLightEffect->GetConfigurationString();
         
         return "";
+    }
+
+    void LightShowRunner::SetEffectConfigurationString(std::string config)
+    {
+        if (config.empty())
+            return;
+
+        std::vector<std::string> params = StringHelper::Split(config, '&');
+        for (int i = 0; i < params.size(); i++)
+        {
+            std::vector<std::string> param = StringHelper::Split(params[i], '=');
+            currentLightEffect->SetProperty(param[0].c_str(), param[1].c_str());
+        }
     }
 
 } // namespace PicoLightShow

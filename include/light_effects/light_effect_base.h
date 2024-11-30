@@ -22,7 +22,7 @@ namespace PicoLightShow
         virtual void SetBrightness(uint8_t brightness);
         virtual uint32_t GetLedCount();
         virtual void SetLedCount(uint32_t ledCount);
-        virtual void SetProperty(char* name, char* value) = 0;
+        virtual void SetProperty(const char* name, const char* value) = 0;
         virtual std::string GetConfigurationString() = 0;
 
     protected:

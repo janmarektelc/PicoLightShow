@@ -37,7 +37,7 @@ namespace PicoLightShow
     {
     }
 
-    void RunningPoint::SetProperty(char* name, char* value)
+    void RunningPoint::SetProperty(const char* name, const char* value)
     {
         
     }
