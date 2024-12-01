@@ -4,6 +4,7 @@
 #include "include/www_server/ssi.h"
 #include "include/www_server/cgi.h"
 #include "include/persistent_settings/persistent_settings.h"
+#include "include/light_show_runner/light_show_runner.h"
 
 #include "include/www_server/www_server.h"
 
@@ -32,6 +33,7 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
     //~wifiMode(ap=0/client=1)~ssid~passwd~isdhcp(0/1)~ipAddress~ipMask~gwIp~
     PicoLightShow::PersistentSettings::SetByConfigString(std::string((char*)p->payload, p->len));
     pbuf_free(p);
+    strcpy(PicoLightShow::PersistentSettings::Settings.CurrentEffectConfiguration, PicoLightShow::LightShowRunner::GetEffectConfigurationString().c_str());
     PicoLightShow::PersistentSettings::Save();
     return ret;
 }

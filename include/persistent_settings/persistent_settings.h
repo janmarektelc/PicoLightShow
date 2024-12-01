@@ -27,6 +27,7 @@ namespace PicoLightShow
         uint8_t EffectIndex;
         uint32_t LedCount;
         uint8_t Brightness;
+        char CurrentEffectConfiguration[128 + 1];
     };
 
     class PersistentSettings

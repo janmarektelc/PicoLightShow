@@ -8,7 +8,7 @@
 #include "include/helpers/string_helper.h"
 #include "include/persistent_settings/persistent_settings.h"
 
-#define FLASH_DATA_IDENTIFIER 0x2E
+#define FLASH_DATA_IDENTIFIER 0x7E
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 
 namespace PicoLightShow
@@ -30,11 +30,12 @@ namespace PicoLightShow
             .DeviceAddress = convertIpToUint32(0,0,0,0),
             .NetMask = convertIpToUint32(0,0,0,0),
             .GatewayAddress = convertIpToUint32(0,0,0,0),
-            .IsRunning = false,
-            .Delay = 10,
+            .IsRunning = true,
+            .Delay = 20,
             .EffectIndex = 0,
             .LedCount = 20,
-            .Brightness = 50
+            .Brightness = 50,
+            .CurrentEffectConfiguration = "",
         }; 
     }
 

@@ -51,6 +51,10 @@ namespace PicoLightShow
         currentLightEffect = LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].GetInstance();
         currentLightEffect->SetLedCount(PersistentSettings::Settings.LedCount);
         currentLightEffect->SetBrightness(PersistentSettings::Settings.Brightness);
+        if (PersistentSettings::Settings.CurrentEffectConfiguration[0] != '\0')
+        {
+            LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters = PersistentSettings::Settings.CurrentEffectConfiguration;
+        }
 
         SetEffectConfigurationString(LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters);
 
