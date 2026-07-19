@@ -38,10 +38,6 @@ namespace PicoLightShow
         static void SetEffectProperty(char* name, char* value);
         static std::string GetEffectConfigurationString();
 
-        // External raw RGB input (DPP)
-        static void PushExternalFrame(const uint8_t* data, size_t len);
-        static void EnableExternalInput(bool enable);
-
     private:
         static LightEffectBase *currentLightEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];

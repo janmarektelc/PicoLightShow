@@ -12,6 +12,7 @@
 #include "include/helpers/string_helper.h"
 
 #include "include/light_show_runner/light_show_runner.h"
+#include "include/DDP/ddp.h"
 
 namespace PicoLightShow
 {
@@ -69,7 +70,7 @@ namespace PicoLightShow
 
     void LightShowRunner::Pool()
     {
-        if (PersistentSettings::Settings.IsRunning)
+        if (PersistentSettings::Settings.IsRunning && !DDP::IsActive())
         {          
             currentLightEffect->MoveTimeFrame(); 
             currentLightEffect->Draw();

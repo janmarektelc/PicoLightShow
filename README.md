@@ -9,6 +9,7 @@
 - **Light Effects Generation:** The Raspberry Pi Pico controls WS2812 LED strips, enabling the creation of various light effects such as color transitions, blinking, waves, and other dynamic patterns.
 - **Web Server:** An integrated web server allows users to connect to the Raspberry Pi Pico via Wi-Fi and control the light effects using a simple web interface.
 - **User-Friendly Interface:** The web interface is designed to be intuitive and easy to use, allowing users to quickly change light effect settings without the need for programming.
+- **OpenRGB / DDP Support:** Since version 0.9.3, the device natively supports the Distributed Display Protocol (DDP) on the default port 4048. This ensures seamless integration and real-time synchronization with OpenRGB.
 
 ## Technical Specifications:
 
@@ -19,7 +20,7 @@
 - **Web Server:** Hosted on the Raspberry Pi Pico, accessible via a web browser
 
 ## Download
-To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.2.uf2).
+To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.3.uf2).
 
 ## Hardware Setup
 
