@@ -46,11 +46,13 @@ add_executable(PicoLightShow
     src/light_effects/jans_ping_pong.cpp
     src/light_effects/color_change.cpp
     src/helpers/string_helper.cpp
+    src/helpers/hw_infohelper.cpp
     src/persistent_settings/persistent_settings.cpp
-    src/www_server/ssi.cpp
-    src/www_server/cgi.cpp
+    src/www_server/http_sender.cpp
     src/www_server/www_server.cpp
+    src/www_server/light_show_web.cpp
     src/ddp/ddp.cpp
+    src/wled_provider/wled_provider.cpp
     dhcpserver/dhcpserver.c
     dnsserver/dnsserver.c)
 
@@ -78,7 +80,6 @@ target_include_directories(PicoLightShow PRIVATE
 # Add any user requested libraries
 target_link_libraries(PicoLightShow 
         pico_cyw43_arch_lwip_poll
-        pico_lwip_http
         pico_multicore
         hardware_pio
         hardware_flash)

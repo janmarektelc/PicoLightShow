@@ -71,7 +71,7 @@ namespace PicoLightShow
     void LightShowRunner::Pool()
     {
         if (PersistentSettings::Settings.IsRunning && !DDP::IsActive())
-        {          
+        {         
             currentLightEffect->MoveTimeFrame(); 
             currentLightEffect->Draw();
         }
@@ -93,14 +93,14 @@ namespace PicoLightShow
         return PersistentSettings::Settings.IsRunning;
     }
 
-    uint32_t LightShowRunner::GetFrameDelay()
+    uint8_t LightShowRunner::GetFrameDelay()
     {
         return PersistentSettings::Settings.Delay;
     }
 
-    void LightShowRunner::SetFrameDelay(uint32_t frameDelay)
+    void LightShowRunner::SetFrameDelay(uint8_t frameDelay)
     {
-        if (frameDelay >= 1 && frameDelay <= 10000)
+        if (frameDelay >= 1 && frameDelay <= 255)
         {
             PersistentSettings::Settings.Delay = frameDelay;
         }
@@ -172,6 +172,11 @@ namespace PicoLightShow
         return vect;
     }
 
+    uint8_t LightShowRunner::GetEffectsCount()
+    {
+        return sizeof(LighShowEffectDescriptors) / sizeof(LighShowEffectDescriptors[0]); 
+    }
+
     std::vector<std::string> LightShowRunner::GetEffectSetupPages()
     {
         int arraySize = sizeof(LighShowEffectDescriptors) / sizeof(LighShowEffectDescriptors[0]); 
@@ -183,7 +188,7 @@ namespace PicoLightShow
         return vect;
     }
 
-    void LightShowRunner::SetEffectProperty(char* name, char* value)
+    void LightShowRunner::SetEffectProperty(const char* name, const char* value)
     {
         if (currentLightEffect)
         {

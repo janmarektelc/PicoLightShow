@@ -1,15 +1,18 @@
-#ifndef PICO_LIGHT_SHOW_WWW_SERVER_H_
-#define PICO_LIGHT_SHOW_WWW_SERVER_H_
+#pragma once
+#include "lwip/tcp.h"
+#include <string>
+#include "models.h"
 
-namespace PicoLightShow
-{
-    class WwwServer
-    {
-    public:
-        WwwServer() = delete;
-        static void Init();
-    };
+class WwwServer {
+public:
+    virtual ~WwwServer() = default;
+    virtual HttpResponse onRequest(const HttpRequest& req) = 0;
+    void start(uint16_t port = 80);
+private:
+    // LwIp callbacks
+    static err_t s_accept_callback(void* arg, tcp_pcb* newpcb, err_t err);
+    static err_t s_recv_callback(void* arg, tcp_pcb* tpcb, pbuf* p, err_t err);
 
-} // namespace PicoLightShow
-
-#endif // PICO_LIGHT_SHOW_WWW_SERVER_H_
+    HttpRequest parseRequest(const std::string& reqStr);
+    void parseQueryString(const std::string& queryStr, std::map<std::string, std::string>& params);
+};

@@ -25,8 +25,8 @@ namespace PicoLightShow
         static void Start();
         static void Stop();
         static bool GetIsRunning();
-        static uint32_t GetFrameDelay();
-        static void SetFrameDelay(uint32_t frameDelay);
+        static uint8_t GetFrameDelay();
+        static void SetFrameDelay(uint8_t frameDelay);
         static uint32_t GetLedCount();
         static void SetLedCount(uint32_t ledCount);
         static uint8_t GetBrightness();
@@ -34,8 +34,9 @@ namespace PicoLightShow
         static uint32_t GetEffect();
         static void SetEffect(uint32_t effect);
         static std::vector<std::string> GetEffectNames();
+        static uint8_t GetEffectsCount();
         static std::vector<std::string> GetEffectSetupPages();
-        static void SetEffectProperty(char* name, char* value);
+        static void SetEffectProperty(const char* name, const char* value);
         static std::string GetEffectConfigurationString();
 
     private:

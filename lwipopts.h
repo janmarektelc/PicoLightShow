@@ -23,6 +23,7 @@
 #define MEMP_NUM_TCP_SEG            32
 #define MEMP_NUM_ARP_QUEUE          10
 #define PBUF_POOL_SIZE              24
+#define MEMP_NUM_TCP_PCB            8
 #define LWIP_ARP                    1
 #define LWIP_ETHERNET               1
 #define LWIP_ICMP                   1
@@ -86,13 +87,5 @@
 #define SLIP_DEBUG                  LWIP_DBG_OFF
 #define DHCP_DEBUG                  LWIP_DBG_OFF
 
-#define LWIP_HTTPD 1
-#define LWIP_HTTPD_SSI 1
-#define LWIP_HTTPD_CGI 1
-#define LWIP_HTTPD_SUPPORT_POST 1
-// don't include the tag comment - less work for the CPU, but may be harder to debug
-#define LWIP_HTTPD_SSI_INCLUDE_TAG 0
-#define LWIP_HTTPD_MAX_TAG_INSERT_LEN 1024
-#define HTTPD_FSDATA_FILE "web_fsdata.c"
 
 #endif /* __LWIPOPTS_H__ */

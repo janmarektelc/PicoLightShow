@@ -7,7 +7,7 @@ extern "C" {
 #include "dnsserver/dnsserver.h"
 }
 
-#include "include/www_server/www_server.h"
+#include "include/www_server/light_show_web.h"
 #include "include/light_show_runner/light_show_runner.h"
 #include "include/persistent_settings/persistent_settings.h"
 #include "include/ddp/ddp.h"
@@ -73,10 +73,10 @@ int main()
             IP4_ADDR(&gw, 192, 168, 4, 1);
             IP4_ADDR(&mask, 255, 255, 255, 0);
 
-            dhcp_server_t dhcp_server;
+            static dhcp_server_t dhcp_server;
             dhcp_server_init(&dhcp_server, &gw, &mask);
 
-            dns_server_t dns_server;
+            static dns_server_t dns_server;
             dns_server_init(&dns_server, &gw);
             }
     }
@@ -91,16 +91,15 @@ int main()
         IP4_ADDR(&gw, 192, 168, 4, 1);
         IP4_ADDR(&mask, 255, 255, 255, 0);
 
-        dhcp_server_t dhcp_server;
+        static dhcp_server_t dhcp_server;
         dhcp_server_init(&dhcp_server, &gw, &mask);
 
-        dns_server_t dns_server;
+        static dns_server_t dns_server;
         dns_server_init(&dns_server, &gw);
     }
 
-
-
-    PicoLightShow::WwwServer::Init();
+    PicoLightShow::LightShowWeb webServer;
+    webServer.start(80);
 
     PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
 
@@ -108,8 +107,6 @@ int main()
         PicoLightShow::DDP::Poll();
 
         cyw43_arch_poll();
-
-        sleep_ms(10); 
     }
 
     // http_server_deinit(&http_server);

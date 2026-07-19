@@ -10,6 +10,7 @@
 - **Web Server:** An integrated web server allows users to connect to the Raspberry Pi Pico via Wi-Fi and control the light effects using a simple web interface.
 - **User-Friendly Interface:** The web interface is designed to be intuitive and easy to use, allowing users to quickly change light effect settings without the need for programming.
 - **OpenRGB / DDP Support:** Since version 0.9.3, the device natively supports the Distributed Display Protocol (DDP) on the default port 4048. This ensures seamless integration and real-time synchronization with OpenRGB.
+- **Home Assistant Integration:** Since version 0.9.4, the device natively supports the **WLED JSON API**, allowing seamless integration into **Home Assistant** for effortless control of effects, brightness, speed, presets, playlists, and segment freezing by embedded **WLED** integration.
 
 ## Technical Specifications:
 
@@ -17,6 +18,9 @@
 - **LED Strips:** WS2812 (addressable RGB LEDs)
 - **Programming Language:** C++
 - **Communication:** Wi-Fi (as an access point or connect to Wi-Fi network)
+- **Supported Protocols & APIs:**
+  - **WLED JSON API:** For Home Assistant and smart home automation
+  - **OpenRGB / DDP:** Real-time LED control via Distributed Display Protocol (UDP port 4048)
 - **Web Server:** Hosted on the Raspberry Pi Pico, accessible via a web browser
 
 ## Download
