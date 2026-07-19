@@ -4,13 +4,14 @@
 
 #include "pico/stdlib.h"
 
-// sockets
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <unistd.h>
+// lwIP sockets
+#include "lwip/sockets.h"
+#include "lwip/inet.h"
 #include <string.h>
+
+#ifndef DPP_DEBUG
+#define DPP_DEBUG 1
+#endif
 
 namespace PicoLightShow
 {
@@ -21,12 +22,17 @@ namespace PicoLightShow
         if (dpp_sock >= 0)
             return true;
 
-        dpp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+        dpp_sock = lwip_socket(AF_INET, SOCK_DGRAM, 0);
         if (dpp_sock < 0)
+        {
+#if DPP_DEBUG
+            printf("DPP: failed to create socket\n");
+#endif
             return false;
+        }
 
         int reuse = 1;
-        setsockopt(dpp_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+        lwip_setsockopt(dpp_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
@@ -34,15 +40,25 @@ namespace PicoLightShow
         addr.sin_port = htons(5568);
         addr.sin_addr.s_addr = INADDR_ANY;
 
-        if (bind(dpp_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if (lwip_bind(dpp_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
-            close(dpp_sock);
+#if DPP_DEBUG
+            printf("DPP: bind failed\n");
+#endif
+            lwip_close(dpp_sock);
             dpp_sock = -1;
             return false;
         }
 
-        int flags = fcntl(dpp_sock, F_GETFL, 0);
-        fcntl(dpp_sock, F_SETFL, flags | O_NONBLOCK);
+        int flags = lwip_fcntl(dpp_sock, F_GETFL, 0);
+        lwip_fcntl(dpp_sock, F_SETFL, flags | O_NONBLOCK);
+
+#if DPP_DEBUG
+        printf("DPP: socket initialized on port 5568\n");
+#endif
+
+        // enable external input in LightShowRunner
+        LightShowRunner::EnableExternalInput(true);
 
         return true;
     }
@@ -55,9 +71,13 @@ namespace PicoLightShow
         uint8_t buf[1536];
         struct sockaddr_in src;
         socklen_t srclen = sizeof(src);
-        int len = recvfrom(dpp_sock, buf, sizeof(buf), 0, (struct sockaddr *)&src, &srclen);
+        int len = lwip_recvfrom(dpp_sock, buf, sizeof(buf), 0, (struct sockaddr *)&src, &srclen);
         if (len <= 0)
             return;
+
+#if DPP_DEBUG
+        printf("DPP: received %d bytes from %s\n", len, inet_ntoa(src.sin_addr));
+#endif
 
         // Map raw payload as 3 bytes per LED (R,G,B)
         size_t want = (size_t)PersistentSettings::Settings.LedCount * 3;
