@@ -50,6 +50,7 @@ add_executable(PicoLightShow
     src/www_server/ssi.cpp
     src/www_server/cgi.cpp
     src/www_server/www_server.cpp
+    src/ddp/ddp.cpp
     dhcpserver/dhcpserver.c
     dnsserver/dnsserver.c)
 

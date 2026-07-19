@@ -1,5 +1,3 @@
-//#define CYW43_HOST_NAME "PicoLightShow"
-
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "pico/multicore.h"
@@ -12,6 +10,7 @@ extern "C" {
 #include "include/www_server/www_server.h"
 #include "include/light_show_runner/light_show_runner.h"
 #include "include/persistent_settings/persistent_settings.h"
+#include "include/ddp/ddp.h"
 
 void core1_entry()
 {
@@ -103,7 +102,11 @@ int main()
 
     PicoLightShow::WwwServer::Init();
 
+    PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
+
     while (true) {
+        PicoLightShow::DDP::Poll();
+
         cyw43_arch_poll();
 
         sleep_ms(10); 

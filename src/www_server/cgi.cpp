@@ -5,6 +5,7 @@
 #include "lwipopts.h"
 #include "include/light_show_runner/light_show_runner.h"
 #include "include/persistent_settings/persistent_settings.h"
+#include "include/DDP/ddp.h"
 
 #include "include/www_server/cgi.h"
 
@@ -48,6 +49,7 @@ namespace PicoLightShow
             if (strcmp(pcParam[i], "ledCount") == 0)
             {
                 LightShowRunner::SetLedCount(atoi(pcValue[i]));
+                DDP::Resize(atoi(pcValue[i]));
             }
         }
         return "/success.html";
