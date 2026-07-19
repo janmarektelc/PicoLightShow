@@ -4,9 +4,10 @@
 
 #include "pico/stdlib.h"
 
-// lwIP sockets
+// lwIP sockets (use standard socket names provided by lwip's POSIX API)
 #include "lwip/sockets.h"
 #include "lwip/inet.h"
+#include <fcntl.h>
 #include <string.h>
 
 #ifndef DPP_DEBUG
@@ -22,7 +23,7 @@ namespace PicoLightShow
         if (dpp_sock >= 0)
             return true;
 
-        dpp_sock = lwip_socket(AF_INET, SOCK_DGRAM, 0);
+        dpp_sock = socket(AF_INET, SOCK_DGRAM, 0);
         if (dpp_sock < 0)
         {
 #if DPP_DEBUG
@@ -32,7 +33,7 @@ namespace PicoLightShow
         }
 
         int reuse = 1;
-        lwip_setsockopt(dpp_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+        setsockopt(dpp_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
@@ -40,18 +41,18 @@ namespace PicoLightShow
         addr.sin_port = htons(5568);
         addr.sin_addr.s_addr = INADDR_ANY;
 
-        if (lwip_bind(dpp_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if (bind(dpp_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
 #if DPP_DEBUG
             printf("DPP: bind failed\n");
 #endif
-            lwip_close(dpp_sock);
+            close(dpp_sock);
             dpp_sock = -1;
             return false;
         }
 
-        int flags = lwip_fcntl(dpp_sock, F_GETFL, 0);
-        lwip_fcntl(dpp_sock, F_SETFL, flags | O_NONBLOCK);
+        int flags = fcntl(dpp_sock, F_GETFL, 0);
+        fcntl(dpp_sock, F_SETFL, flags | O_NONBLOCK);
 
 #if DPP_DEBUG
         printf("DPP: socket initialized on port 5568\n");
@@ -71,7 +72,7 @@ namespace PicoLightShow
         uint8_t buf[1536];
         struct sockaddr_in src;
         socklen_t srclen = sizeof(src);
-        int len = lwip_recvfrom(dpp_sock, buf, sizeof(buf), 0, (struct sockaddr *)&src, &srclen);
+        int len = recvfrom(dpp_sock, buf, sizeof(buf), 0, (struct sockaddr *)&src, &srclen);
         if (len <= 0)
             return;
 
