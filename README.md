@@ -24,7 +24,7 @@
 - **Web Server:** Hosted on the Raspberry Pi Pico, accessible via a web browser
 
 ## Download
-To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.3.uf2).
+To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.4.uf2).
 
 ## Hardware Setup
 
