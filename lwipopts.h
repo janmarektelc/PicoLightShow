@@ -24,6 +24,7 @@
 #define MEMP_NUM_ARP_QUEUE          10
 #define PBUF_POOL_SIZE              24
 #define MEMP_NUM_TCP_PCB            8
+#define MEMP_NUM_SYS_TIMEOUT        16
 #define LWIP_ARP                    1
 #define LWIP_ETHERNET               1
 #define LWIP_ICMP                   1

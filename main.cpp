@@ -11,6 +11,22 @@ extern "C" {
 #include "include/light_show_runner/light_show_runner.h"
 #include "include/persistent_settings/persistent_settings.h"
 #include "include/ddp/ddp.h"
+#include "include/mqtt/mqtt_client.h"
+#include "include/mqtt/light_show_mqtt.h"
+
+void startAp(const char* ssid, const char* password) {
+    cyw43_arch_enable_ap_mode(ssid, password, CYW43_AUTH_WPA2_AES_PSK);
+
+    ip4_addr_t gw, mask;
+    IP4_ADDR(&gw, 192, 168, 4, 1);
+    IP4_ADDR(&mask, 255, 255, 255, 0);
+
+    static dhcp_server_t dhcp_server;
+    dhcp_server_init(&dhcp_server, &gw, &mask);
+
+    static dns_server_t dns_server;
+    dns_server_init(&dns_server, &gw);
+}
 
 void core1_entry()
 {
@@ -33,30 +49,12 @@ int main()
 
     multicore_launch_core1(core1_entry);
 
-    bool isConnected = false;
+    bool isConnected = false; //true if pico is connected to wifi network as a client
 
     if (PicoLightShow::PersistentSettings::Settings.WifiMode == PicoLightShow::wifiModeEnum::CLIENT)
     {
         // Enable wifi station
         cyw43_arch_enable_sta_mode();  
-
-        if (!PicoLightShow::PersistentSettings::Settings.IsDhcp)
-        {
-#if NO_SYS == 1
-		cyw43_arch_lwip_begin();
-#endif
-        dhcp_release_and_stop(cyw43_state.netif);
-        ip4_addr_t ip, gw, mask;
-        ip.addr=PicoLightShow::PersistentSettings::Settings.DeviceAddress;
-        mask.addr=PicoLightShow::PersistentSettings::Settings.NetMask;
-        gw.addr=PicoLightShow::PersistentSettings::Settings.GatewayAddress;
-        netif_set_addr(cyw43_state.netif, &ip, &mask, &gw);
-
-#if NO_SYS == 1
-		cyw43_arch_lwip_end();
-#endif
-        //netif_set_hostname(cyw43_state.netif, "PicoLightShow");
-        }
 
         if (cyw43_arch_wifi_connect_timeout_ms(PicoLightShow::PersistentSettings::Settings.WifiName, PicoLightShow::PersistentSettings::Settings.WifiPassword, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
             isConnected = false;
@@ -64,53 +62,47 @@ int main()
             isConnected = true;
         }
 
+        if (isConnected && !PicoLightShow::PersistentSettings::Settings.IsDhcp)        
+        {
+            dhcp_release_and_stop(cyw43_state.netif);
+            ip4_addr_t ip, gw, mask;
+            ip.addr=PicoLightShow::PersistentSettings::Settings.DeviceAddress;
+            mask.addr=PicoLightShow::PersistentSettings::Settings.NetMask;
+            gw.addr=PicoLightShow::PersistentSettings::Settings.GatewayAddress;
+            netif_set_addr(cyw43_state.netif, &ip, &mask, &gw);
+            netif_set_up(cyw43_state.netif);
+        }
+
         if (!isConnected)
         {
             // not possible to connect to configured wifi, start default AP mode
-            cyw43_arch_enable_ap_mode(DEFAULT_WIFI_SSID, DEFAULT_WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
-
-            ip4_addr_t gw, mask;
-            IP4_ADDR(&gw, 192, 168, 4, 1);
-            IP4_ADDR(&mask, 255, 255, 255, 0);
-
-            static dhcp_server_t dhcp_server;
-            dhcp_server_init(&dhcp_server, &gw, &mask);
-
-            static dns_server_t dns_server;
-            dns_server_init(&dns_server, &gw);
-            }
+            startAp(DEFAULT_WIFI_SSID, DEFAULT_WIFI_PASSWORD);
+        }
     }
 
     if (PicoLightShow::PersistentSettings::Settings.WifiMode == PicoLightShow::wifiModeEnum::AP)
     {
-        //netif_set_hostname(cyw43_state.netif, "PicoLightShow");
         // Enable wifi access point
-        cyw43_arch_enable_ap_mode(PicoLightShow::PersistentSettings::Settings.WifiName, PicoLightShow::PersistentSettings::Settings.WifiPassword, CYW43_AUTH_WPA2_AES_PSK);
-
-        ip4_addr_t gw, mask;
-        IP4_ADDR(&gw, 192, 168, 4, 1);
-        IP4_ADDR(&mask, 255, 255, 255, 0);
-
-        static dhcp_server_t dhcp_server;
-        dhcp_server_init(&dhcp_server, &gw, &mask);
-
-        static dns_server_t dns_server;
-        dns_server_init(&dns_server, &gw);
+        startAp(PicoLightShow::PersistentSettings::Settings.WifiName, PicoLightShow::PersistentSettings::Settings.WifiPassword);
     }
 
     PicoLightShow::LightShowWeb webServer;
     webServer.start(80);
 
-    PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
+    //PicoLightShow::LightShowMqtt mqtt;
+    if (isConnected) { // if is connected to wifi network as a client, connect to mqtt broker and initialize DDP
+        PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
+        // mqtt.Connect("xxx.xxx.xxx.xx", 1883, "PicoLightShowClient", "user", "password");
+    }
 
     while (true) {
-        PicoLightShow::DDP::Poll();
-
+        if (isConnected)
+        {
+            PicoLightShow::DDP::Poll();
+            //mqtt.Poll();
+        }
         cyw43_arch_poll();
     }
 
-    // http_server_deinit(&http_server);
-    // dns_server_deinit(&dns_server);
-    // dhcp_server_deinit(&dhcp_server);
     cyw43_arch_deinit();
 }

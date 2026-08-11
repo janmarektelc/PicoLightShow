@@ -51,6 +51,8 @@ add_executable(PicoLightShow
     src/www_server/http_sender.cpp
     src/www_server/www_server.cpp
     src/www_server/light_show_web.cpp
+    src/mqtt/mqtt_client.cpp
+    src/mqtt/light_show_mqtt.cpp
     src/ddp/ddp.cpp
     src/wled_provider/wled_provider.cpp
     dhcpserver/dhcpserver.c
