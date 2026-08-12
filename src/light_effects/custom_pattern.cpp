@@ -17,14 +17,14 @@ namespace PicoLightShow
     {
     }
 
-    void CustomPattern::Draw()
+    void CustomPattern::Draw(std::vector<uint32_t>* buffer)
     {
         if (DrawKind == PatternDrawKind::Once)
-            DrawOnce();
+            DrawOnce(buffer);
         else if (DrawKind == PatternDrawKind::Repeat)
-            DrawRepeat();
+            DrawRepeat(buffer);
         else if (DrawKind == PatternDrawKind::Stretch)
-            DrawStretch();
+            DrawStretch(buffer);
     }
 
     void CustomPattern::MoveTimeFrame()
@@ -41,7 +41,7 @@ namespace PicoLightShow
     {
     }
 
-    void CustomPattern::DrawRepeat()
+    void CustomPattern::DrawRepeat(std::vector<uint32_t>* buffer)
     {
         for (int i = 0; i < ledCount; i++)
         {
@@ -51,7 +51,7 @@ namespace PicoLightShow
                 patternIndex += ColorPattern.size();
 
             if (patternIndex < ColorPattern.size())
-                PutPixel(ColorPattern.at(patternIndex));
+                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
         }
     }
 
@@ -75,7 +75,7 @@ namespace PicoLightShow
         }
     }
 
-    void CustomPattern::DrawStretch()
+    void CustomPattern::DrawStretch(std::vector<uint32_t>* buffer)
     {
         for (int i = 0; i < ledCount; i++)
         {
@@ -85,7 +85,7 @@ namespace PicoLightShow
             int patternIndex = (float)(x) / ((float)ledCount / ColorPattern.size()); //zero time state
 
             if (patternIndex < ColorPattern.size())
-                PutPixel(ColorPattern.at(patternIndex));
+                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
         }
     }
 
@@ -109,16 +109,16 @@ namespace PicoLightShow
         }
     }
 
-    void CustomPattern::DrawOnce()
+    void CustomPattern::DrawOnce(std::vector<uint32_t>* buffer)
     {
         for (int i = 0; i < ledCount; i++)
         {
             int patternIndex = i - time;
 
             if (patternIndex >= 0 && patternIndex < ColorPattern.size())
-                PutPixel(ColorPattern.at(patternIndex));
+                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
             else
-                PutPixel(0, 0, 0);
+                buffer->at(i) = 0;
         }
     }
 
@@ -172,9 +172,6 @@ namespace PicoLightShow
             }
             time = 0;
         }
-
-        Draw();
-        sleep_ms(5);
     }
 
     std::string CustomPattern::GetConfigurationString()

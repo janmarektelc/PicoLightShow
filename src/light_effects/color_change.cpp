@@ -16,12 +16,9 @@ namespace PicoLightShow
     {
     }
 
-    void ColorChange::Draw()
+    void ColorChange::Draw(std::vector<uint32_t>* buffer)
     {
-        for (int i = 0; i < ledCount; i++)
-        {
-            PutPixel(Red,Green,Blue);
-        }
+        std::fill(buffer->begin(), buffer->end(), EncodeColor((uint8_t)Red, (uint8_t)Green, (uint8_t)Blue));
     }
 
     void ColorChange::MoveTimeFrame()
@@ -74,9 +71,6 @@ namespace PicoLightShow
             
             Init();
         }
-
-        Draw();
-        sleep_ms(5);
     }
 
     std::string ColorChange::GetConfigurationString()

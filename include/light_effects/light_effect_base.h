@@ -6,6 +6,7 @@
 
 #include "include/types.h"
 #include "include/constants.h"
+#include <vector>
 
 namespace PicoLightShow
 {
@@ -15,26 +16,20 @@ namespace PicoLightShow
     public:
         LightEffectBase();
         virtual ~LightEffectBase();
-        virtual void Draw() = 0;
+        virtual void Draw(std::vector<uint32_t>* buffer) = 0;
         virtual void Init() = 0;
         virtual void MoveTimeFrame() = 0;
-        virtual uint8_t GetBrightness();
-        virtual void SetBrightness(uint8_t brightness);
         virtual uint32_t GetLedCount();
         virtual void SetLedCount(uint32_t ledCount);
         virtual void SetProperty(const char* name, const char* value) = 0;
         virtual std::string GetConfigurationString() = 0;
 
     protected:
-        void PutPixel(uint8_t r, uint8_t g, uint8_t b);
-        void PutPixel(Color color);
+        static uint32_t EncodeColor(uint8_t r, uint8_t g, uint8_t b);
+        static uint32_t EncodeColor(Color color);
 
         int ledCount;
         int time;
-        uint8_t brightness;
-    
-    private:
-        float fbrightness;
     };
 
 } // namespace PicoLightShow

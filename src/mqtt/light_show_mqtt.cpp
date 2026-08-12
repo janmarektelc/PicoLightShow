@@ -53,14 +53,14 @@ void LightShowMqtt::OnMqttMessage(const std::string& topic, const std::string& p
     if (topic == "pico/light/switch") {
         if (payload == "ON")
         {
-            LightShowRunner::Start();
+            LightShowRunner::SwitchOn();
         }
         else
         {
-            LightShowRunner::Stop();
+            LightShowRunner::SwitchOff();
         }       
 
-        Publish("pico/light/status", LightShowRunner::GetIsRunning() ? "ON" : "OFF", true);
+        Publish("pico/light/status", LightShowRunner::GetSwitchOn() ? "ON" : "OFF", true);
     } 
     else if (topic == "pico/light/brightness/set") {
         int val = std::stoi(payload);

@@ -3,7 +3,8 @@
 
 #define WS2812_PIN 14
 #define IS_RGBW false
-#define MINIMAL_REDRAW_DELAY 1
+#define TARGET_FPS 30
+#define FRAME_TIME_MS (1000 / TARGET_FPS)
 #define WS_STATE_MACHINE_INDEX 0
 #define WS_PIO_INSTANCE pio0_hw
 

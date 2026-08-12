@@ -24,7 +24,10 @@ namespace PicoLightShow
         static void Pool();
         static void Start();
         static void Stop();
+        static void SwitchOn();
+        static void SwitchOff();
         static bool GetIsRunning();
+        static bool GetSwitchOn();
         static uint8_t GetFrameDelay();
         static void SetFrameDelay(uint8_t frameDelay);
         static uint32_t GetLedCount();
@@ -40,13 +43,22 @@ namespace PicoLightShow
         static std::string GetEffectConfigurationString();
 
     private:
+        static uint64_t lastFrameTimeUs;
+        static uint32_t timeAccumulatorMs;
+        static bool isSwitchOn;
+        static std::vector<uint32_t>* ledBuffer;
         static LightEffectBase *currentLightEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
         static void SetEffectConfigurationString(std::string config);
 
         static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateColorChange();
-        static LightEffectBase *CreateJansPingPong();
+        static LightEffectBase *CreateRunningPoint();
+
+        static void FillColor(Color color);
+        static void FillColor(uint8_t r, uint8_t g, uint8_t b);
+        static void PutPixel(uint8_t r, uint8_t g, uint8_t b);
+        static void PutPixel(Color color);
     };
 
 } // namespace PicoLightShow

@@ -5,7 +5,6 @@
 #include "ws2812.pio.h"
 
 #include "include/light_effects/running_point.h"
-#include "include/light_effects/jans_ping_pong.h"
 #include "include/light_effects/custom_pattern.h"
 #include "include/light_effects/color_change.h"
 #include "include/persistent_settings/persistent_settings.h"
@@ -23,11 +22,14 @@ namespace PicoLightShow
         {"Snakes", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=2&ping-pong=0&direction=0&colors=ff0000,000000,00ff00,000000,0000ff,000000"},
         {"Color change", "change_color_setup.shtml", CreateColorChange, "colors=640000,ff0000,006400,00ff00,000064,0000ff"},
         {"Breath", "change_color_setup.shtml", CreateColorChange, "colors=640000,ff0000"},
-        // {"Jan's ping pong", "", CreateJansPingPong, ""},
+        //{"Running point simple", "", CreateRunningPoint, ""},
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
-
+    std::vector<uint32_t>* LightShowRunner::ledBuffer = nullptr;
+    bool LightShowRunner::isSwitchOn = true;
+    uint64_t LightShowRunner::lastFrameTimeUs = 0;
+    uint32_t LightShowRunner::timeAccumulatorMs = 0;
 
     LightEffectBase *LightShowRunner::CreateCustomPattern()
     {
@@ -39,9 +41,9 @@ namespace PicoLightShow
         return new ColorChange();
     }
 
-    LightEffectBase *LightShowRunner::CreateJansPingPong()
+    LightEffectBase *LightShowRunner::CreateRunningPoint()
     {
-        return new JansPingPong();
+        return new RunningPoint();
     }
 
     void LightShowRunner::Init()
@@ -49,9 +51,10 @@ namespace PicoLightShow
         uint offset = pio_add_program(WS_PIO_INSTANCE, &ws2812_program);
         ws2812_program_init(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX, offset, WS2812_PIN, 800000, IS_RGBW);
 
+        ledBuffer = new std::vector<uint32_t>(PersistentSettings::Settings.LedCount, 0);
+
         currentLightEffect = LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].GetInstance();
         currentLightEffect->SetLedCount(PersistentSettings::Settings.LedCount);
-        currentLightEffect->SetBrightness(PersistentSettings::Settings.Brightness);
         if (PersistentSettings::Settings.CurrentEffectConfiguration[0] != '\0')
         {
             LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters = PersistentSettings::Settings.CurrentEffectConfiguration;
@@ -60,22 +63,65 @@ namespace PicoLightShow
         SetEffectConfigurationString(LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters);
 
         currentLightEffect->Init();
-        
-        if (!PersistentSettings::Settings.IsRunning)
-        {
-            currentLightEffect->Draw();
-            sleep_ms(MINIMAL_REDRAW_DELAY);
-        }
     }
 
     void LightShowRunner::Pool()
     {
-        if (PersistentSettings::Settings.IsRunning && !DDP::IsActive())
-        {         
-            currentLightEffect->MoveTimeFrame(); 
-            currentLightEffect->Draw();
+        uint64_t nowUs = time_us_64();
+        uint32_t deltaMs = 0;
+        if (lastFrameTimeUs > 0) {
+            deltaMs = static_cast<uint32_t>((nowUs - lastFrameTimeUs) / 1000);
+        } else {
+            deltaMs = FRAME_TIME_MS;
         }
-        sleep_ms(PersistentSettings::Settings.Delay);
+        lastFrameTimeUs = time_us_64();;
+
+        if (isSwitchOn && !DDP::IsActive())
+        {
+            //if annimation is running, move time frame         
+            if (PersistentSettings::Settings.IsRunning)
+            {
+                uint8_t speed = PersistentSettings::Settings.Delay;
+
+                if (speed > 0) {
+                    timeAccumulatorMs += deltaMs;
+                    uint32_t stepIntervalMs = 15 + ((255 - speed) * 85) / 254;
+                    while (timeAccumulatorMs >= stepIntervalMs) {
+                        currentLightEffect->MoveTimeFrame();
+                        timeAccumulatorMs -= stepIntervalMs;
+                    }
+                }
+            }
+            //draw to the buffer
+            currentLightEffect->Draw(ledBuffer);
+
+            float fbrightness = ((float)PersistentSettings::Settings.Brightness) / 255.0f;
+
+            //put buffer to pio and apply brightness
+            for (int i = 0; i < ledBuffer->size(); i++)
+            {
+                uint32_t color = ledBuffer->at(i);
+
+                uint8_t r = (color >> 16) & 0xFF;
+                uint8_t g = (color >> 24) & 0xFF;
+                uint8_t b = (color >> 8)  & 0xFF;
+
+                // apply brightness
+                r = (uint8_t)(r * fbrightness);
+                g = (uint8_t)(g * fbrightness);
+                b = (uint8_t)(b * fbrightness);
+
+                uint32_t pioColor = (((uint32_t)r << 8) | ((uint32_t)g << 16) | (uint32_t)b) << 8u;
+
+                pio_sm_put_blocking(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX, pioColor);
+            }
+        }
+        uint32_t elapsedTimeMs = static_cast<uint32_t>((time_us_64() - nowUs) / 1000);
+
+        // sleep to maintain target FPS
+        if (elapsedTimeMs < FRAME_TIME_MS) {
+            sleep_ms(FRAME_TIME_MS - elapsedTimeMs);
+        }
     }
 
     void LightShowRunner::Start()
@@ -88,9 +134,26 @@ namespace PicoLightShow
         PersistentSettings::Settings.IsRunning = false;
     }
 
+    void LightShowRunner::SwitchOn()
+    {
+        currentLightEffect->Init();
+        isSwitchOn = true;
+    }
+
+    void LightShowRunner::SwitchOff()
+    {
+        isSwitchOn = false;
+        LightShowRunner::FillColor(0, 0, 0);
+    }
+
     bool LightShowRunner::GetIsRunning()
     {
         return PersistentSettings::Settings.IsRunning;
+    }
+
+    bool LightShowRunner::GetSwitchOn()
+    {
+        return isSwitchOn;
     }
 
     uint8_t LightShowRunner::GetFrameDelay()
@@ -114,6 +177,7 @@ namespace PicoLightShow
     void LightShowRunner::SetLedCount(uint32_t ledCount)
     {
         PersistentSettings::Settings.LedCount = ledCount;
+        ledBuffer->resize(ledCount, 0);
         currentLightEffect->SetLedCount(ledCount);
     }
 
@@ -125,12 +189,6 @@ namespace PicoLightShow
     void LightShowRunner::SetBrightness(uint8_t brightness)
     {
         PersistentSettings::Settings.Brightness = brightness;
-        currentLightEffect->SetBrightness(brightness);
-        if (!PersistentSettings::Settings.IsRunning)
-        {
-            currentLightEffect->Draw();
-            sleep_ms(MINIMAL_REDRAW_DELAY);
-        }
     }
 
     uint32_t LightShowRunner::GetEffect()
@@ -147,17 +205,10 @@ namespace PicoLightShow
 
         currentLightEffect = LighShowEffectDescriptors[effect].GetInstance();
         currentLightEffect->SetLedCount(PersistentSettings::Settings.LedCount);
-        currentLightEffect->SetBrightness(PersistentSettings::Settings.Brightness);
 
         SetEffectConfigurationString(LighShowEffectDescriptors[effect].Parameters);
 
         currentLightEffect->Init();
-
-        if (!PersistentSettings::Settings.IsRunning)
-        {
-            currentLightEffect->Draw();
-            sleep_ms(MINIMAL_REDRAW_DELAY);
-        }
     }
 
     std::vector<std::string> LightShowRunner::GetEffectNames()
@@ -215,6 +266,40 @@ namespace PicoLightShow
             std::vector<std::string> param = StringHelper::Split(params[i], '=');
             currentLightEffect->SetProperty(param[0].c_str(), param[1].c_str());
         }
+    }
+
+    void LightShowRunner::FillColor(Color color)
+    {
+        for (int i = 0; i < PersistentSettings::Settings.LedCount; i++)
+        {
+            LightShowRunner::PutPixel(color);
+        }
+    }
+
+    void LightShowRunner::FillColor(uint8_t r, uint8_t g, uint8_t b)
+    {
+        for (int i = 0; i < PersistentSettings::Settings.LedCount; i++)
+        {
+            LightShowRunner::PutPixel(r, g, b);
+        }
+    }
+    
+    void LightShowRunner::PutPixel(uint8_t r, uint8_t g, uint8_t b)
+    {
+        pio_sm_put_blocking(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX,
+                            (((uint32_t)(r) << 8) |
+                             ((uint32_t)(g) << 16) |
+                             (uint32_t)(b))
+                                << 8u);
+    }
+
+    void LightShowRunner::PutPixel(Color color)
+    {
+        pio_sm_put_blocking(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX,
+                            (((uint32_t)(color.Red) << 8) |
+                             ((uint32_t)(color.Green) << 16) |
+                             (uint32_t)(color.Blue))
+                                << 8u);
     }
 
 } // namespace PicoLightShow

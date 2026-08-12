@@ -14,7 +14,7 @@ namespace PicoLightShow
     public:
         ColorChange();
         virtual ~ColorChange();
-        virtual void Draw();
+        virtual void Draw(std::vector<uint32_t>* buffer);
         virtual void Init();
         virtual void MoveTimeFrame();
         virtual void SetProperty(const char* name, const char* value);

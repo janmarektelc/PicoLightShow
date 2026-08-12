@@ -37,6 +37,14 @@ namespace PicoLightShow
             LightShowRunner::Stop();
             return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
         }
+        if (req.uri == "/switch_on") {
+            LightShowRunner::SwitchOn();
+            return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
+        }
+        if (req.uri == "/switch_off") {
+            LightShowRunner::SwitchOff();
+            return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
+        }
         if (req.uri == "/configure_runner") {
             auto speed = req.parameters.find("speed");
             if (speed != req.parameters.end()) {
@@ -87,6 +95,19 @@ namespace PicoLightShow
             std::string brightness = std::to_string(LightShowRunner::GetBrightness());
 
             std::string html = R"raw(<div class="d-flex flex-column">
+                <!-- on/off switch -->
+                <div class="d-inline-flex align-items-center pb-2">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
+                            <path d="M7.5 1v7h1V1z"/>
+                            <path d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812"/>
+                        </svg>
+                    </div>
+                    <div class="form-check form-switch mx-2">
+                        <input class="form-check-input" type="checkbox" role="switch" )raw" + isRunning + R"raw( onchange="powerSwitchChanged(checked)" />
+                    </div>
+                </div>
+
                 <!-- run switch -->
                 <div class="d-inline-flex align-items-center pb-2">
                     <div class="d-flex align-items-center">

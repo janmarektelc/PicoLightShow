@@ -20,7 +20,7 @@ namespace PicoLightShow
     public:
         CustomPattern();
         virtual ~CustomPattern();
-        virtual void Draw();
+        virtual void Draw(std::vector<uint32_t>* buffer);
         virtual void Init();
         virtual void MoveTimeFrame();
         virtual void SetProperty(const char* name, const char* value);
@@ -31,9 +31,9 @@ namespace PicoLightShow
         PatternDrawKind DrawKind;
 
     protected:
-        virtual void DrawRepeat();
-        virtual void DrawStretch();
-        virtual void DrawOnce();
+        virtual void DrawRepeat(std::vector<uint32_t>* buffer);
+        virtual void DrawStretch(std::vector<uint32_t>* buffer);
+        virtual void DrawOnce(std::vector<uint32_t>* buffer);
         virtual void MoveTimeFrameRepeat();
         virtual void MoveTimeFrameStretch();
         virtual void MoveTimeFrameOnce();

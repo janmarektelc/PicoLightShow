@@ -11,17 +11,11 @@ namespace PicoLightShow
     {
     }
 
-    void RunningPoint::Draw()
+    void RunningPoint::Draw(std::vector<uint32_t>* buffer)
     {
         int x = time < ledCount ? time : ledCount + (ledCount - time - 2);
-
-        for (int i = 0; i < ledCount; i++)
-        {
-            if (i == x)
-                PutPixel(255, 0, 0);
-            else
-                PutPixel(0, 0, 0);
-        }
+        std::fill(buffer->begin(), buffer->end(), 0u);
+        buffer->at(x) = EncodeColor(255, 0, 0);
     }
 
     void RunningPoint::MoveTimeFrame()
