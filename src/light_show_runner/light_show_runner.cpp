@@ -7,6 +7,7 @@
 #include "include/light_effects/running_point.h"
 #include "include/light_effects/custom_pattern.h"
 #include "include/light_effects/color_change.h"
+#include "include/light_effects/solid_color.h"
 #include "include/persistent_settings/persistent_settings.h"
 #include "include/helpers/string_helper.h"
 
@@ -16,6 +17,7 @@
 namespace PicoLightShow
 {
     LighShowEffectDescriptor LightShowRunner::LighShowEffectDescriptors[] = {
+        {"Solid color", "single_color_setup.shtml", CreateSolidColor, "color=ffffff"},
         {"Running point", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=0&ping-pong=1&direction=1&colors=ff0000"},
         {"Running colors", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=2&ping-pong=1&direction=0&colors=ff0000,ffff00,00ff00,00ffff,0000ff,ff00ff"},
         {"Running colors 1", "custom_pattern_setup.shtml", CreateCustomPattern, "draw-kind=1&ping-pong=0&direction=1&colors=ff0000,ffff00,00ff00,00ffff,0000ff,ff00ff"},
@@ -44,6 +46,11 @@ namespace PicoLightShow
     LightEffectBase *LightShowRunner::CreateRunningPoint()
     {
         return new RunningPoint();
+    }
+
+    LightEffectBase *LightShowRunner::CreateSolidColor()
+    {
+        return new SolidColor();
     }
 
     void LightShowRunner::Init()

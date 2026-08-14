@@ -91,6 +91,7 @@ namespace PicoLightShow
         }        
         if (req.uri == "/led_control.shtml") {
             std::string isRunning = LightShowRunner::GetIsRunning()? "checked" : "";
+            std::string isSwitchOn = LightShowRunner::GetSwitchOn()? "checked" : "";
             std::string delay = std::to_string(LightShowRunner::GetFrameDelay());
             std::string brightness = std::to_string(LightShowRunner::GetBrightness());
 
@@ -104,7 +105,7 @@ namespace PicoLightShow
                         </svg>
                     </div>
                     <div class="form-check form-switch mx-2">
-                        <input class="form-check-input" type="checkbox" role="switch" )raw" + isRunning + R"raw( onchange="powerSwitchChanged(checked)" />
+                        <input class="form-check-input" type="checkbox" role="switch" )raw" + isSwitchOn + R"raw( onchange="checked ? httpGet('/switch_on') : httpGet('/switch_off')" />
                     </div>
                 </div>
 
@@ -194,6 +195,21 @@ namespace PicoLightShow
             res.data = std::make_unique<RamSource>(html);
             return res;
         }
+        if (req.uri == "/single_color_setup.shtml") {
+            printf("Current effect configuration: %s\n", LightShowRunner::GetEffectConfigurationString().c_str());
+            printf("Color value: %s\n", LightShowRunner::GetEffectConfigurationString().substr(6).c_str());
+            std::string html = R"raw(<div class="row align-items-center mt-2">
+                <div class="d-inline-flex flex-wrap gap-2 align-items-center mb-2" id="ColorSettings"></div>
+                <input type="color" value="#)raw" + LightShowRunner::GetEffectConfigurationString().substr(6) + R"raw(" onchange="httpGet('/set_effect_property?color=' + this.value.replace('#', ''))" />
+            </div>)raw";
+
+            HttpResponse res;
+            res.statusCode = 200;
+            res.contentType = "text/html";
+            res.data = std::make_unique<RamSource>(html);
+            return res;
+        }
+
         if (req.uri == "/change_color_setup.shtml") {
             std::string html = R"raw(<div class="row align-items-center mt-2">
                 <div class="d-inline-flex flex-wrap gap-2 align-items-center mb-2" id="ColorPattern"></div>

@@ -44,6 +44,7 @@ add_executable(PicoLightShow
     src/light_effects/running_point.cpp
     src/light_effects/custom_pattern.cpp
     src/light_effects/color_change.cpp
+    src/light_effects/solid_color.cpp
     src/helpers/string_helper.cpp
     src/helpers/hw_infohelper.cpp
     src/persistent_settings/persistent_settings.cpp

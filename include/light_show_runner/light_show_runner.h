@@ -54,6 +54,7 @@ namespace PicoLightShow
         static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateColorChange();
         static LightEffectBase *CreateRunningPoint();
+        static LightEffectBase *CreateSolidColor();
 
         static void FillColor(Color color);
         static void FillColor(uint8_t r, uint8_t g, uint8_t b);

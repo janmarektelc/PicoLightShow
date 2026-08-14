@@ -36,6 +36,15 @@ namespace PicoLightShow
         return ss.str();
     }
 
+    std::string StringHelper::ColorToString(Color color)
+    {
+        std::stringstream ss;
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)color.Red;
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)color.Green;
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)color.Blue;
+        return ss.str();
+    }
+
     uint32_t StringHelper::HexStringToUint32(std::string hexValue)
     {
         uint32_t outVal;
