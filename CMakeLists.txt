@@ -45,6 +45,11 @@ add_executable(PicoLightShow
     src/light_effects/custom_pattern.cpp
     src/light_effects/color_change.cpp
     src/light_effects/solid_color.cpp
+    src/transition_effects/transition_effect_base.cpp
+    src/transition_effects/wipe_transition_effect.cpp
+    src/transition_effects/sparkle_transition_effect.cpp
+    src/transition_effects/flicker_transition_effect.cpp
+    src/transition_effects/fade_transition_effect.cpp
     src/helpers/string_helper.cpp
     src/helpers/hw_infohelper.cpp
     src/persistent_settings/persistent_settings.cpp

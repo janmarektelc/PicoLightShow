@@ -196,8 +196,6 @@ namespace PicoLightShow
             return res;
         }
         if (req.uri == "/single_color_setup.shtml") {
-            printf("Current effect configuration: %s\n", LightShowRunner::GetEffectConfigurationString().c_str());
-            printf("Color value: %s\n", LightShowRunner::GetEffectConfigurationString().substr(6).c_str());
             std::string html = R"raw(<div class="row align-items-center mt-2">
                 <div class="d-inline-flex flex-wrap gap-2 align-items-center mb-2" id="ColorSettings"></div>
                 <input type="color" value="#)raw" + LightShowRunner::GetEffectConfigurationString().substr(6) + R"raw(" onchange="httpGet('/set_effect_property?color=' + this.value.replace('#', ''))" />

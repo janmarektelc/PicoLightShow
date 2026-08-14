@@ -8,7 +8,11 @@
 #include "include/light_effects/custom_pattern.h"
 #include "include/light_effects/color_change.h"
 #include "include/light_effects/solid_color.h"
+#include "include/transition_effects/sparkle_transition_effect.h"
+#include "include/transition_effects/wipe_transition_effect.h"
 #include "include/persistent_settings/persistent_settings.h"
+#include "include/transition_effects/flicker_transition_effect.h"
+#include "include/transition_effects/fade_transition_effect.h"
 #include "include/helpers/string_helper.h"
 
 #include "include/light_show_runner/light_show_runner.h"
@@ -28,6 +32,7 @@ namespace PicoLightShow
     };
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
+    TransitionEffectBase *LightShowRunner::currentTransitionEffect = nullptr;
     std::vector<uint32_t>* LightShowRunner::ledBuffer = nullptr;
     
     bool LightShowRunner::isSwitchOn = true;
@@ -37,6 +42,7 @@ namespace PicoLightShow
 
     uint64_t LightShowRunner::lastFrameTimeUs = 0;
     uint32_t LightShowRunner::timeAccumulatorMs = 0;
+    int LightShowRunner::frame = 0;
 
     LightEffectBase *LightShowRunner::CreateCustomPattern()
     {
@@ -75,6 +81,11 @@ namespace PicoLightShow
         SetEffectConfigurationString(LighShowEffectDescriptors[PersistentSettings::Settings.EffectIndex].Parameters);
 
         currentLightEffect->Init();
+
+        //currentTransitionEffect = new WipeTransitionEffect();
+        //currentTransitionEffect = new SparkleTransitionEffect();
+        //currentTransitionEffect = new FlickerTransitionEffect();
+        currentTransitionEffect = new FadeTransitionEffect();
     }
 
     void LightShowRunner::Pool()
@@ -96,17 +107,18 @@ namespace PicoLightShow
             {
                 case LightShowRunnerState::Standby:
                     std::fill(ledBuffer->begin(), ledBuffer->end(), 0u);
+                    frame = 0;
                     break;
                 case LightShowRunnerState::Starting:
                     RenderEffectFrame(deltaMs);
-                    startAnimationDone = true;
+                    startAnimationDone = currentTransitionEffect->ApplyIn(ledBuffer, deltaMs);
                     break;
                 case LightShowRunnerState::Running:
                     RenderEffectFrame(deltaMs);
                     break;
                 case LightShowRunnerState::Stopping:
                     RenderEffectFrame(deltaMs);
-                    stopAnimationDone = true;
+                    stopAnimationDone = currentTransitionEffect->ApplyOut(ledBuffer, deltaMs);
                     break;
             }
 
@@ -115,7 +127,7 @@ namespace PicoLightShow
             //put buffer to pio and apply brightness
             for (int i = 0; i < ledBuffer->size(); i++)
             {
-                uint32_t color = ledBuffer->at(i);
+                uint32_t color = (*ledBuffer)[i];
 
                 uint8_t r = (color >> 16) & 0xFF;
                 uint8_t g = (color >> 24) & 0xFF;
@@ -148,6 +160,7 @@ namespace PicoLightShow
             {
                 state = LightShowRunnerState::Starting;
                 startAnimationDone = false;
+                currentTransitionEffect->Init();
             }
             break;
         case LightShowRunnerState::Starting:
@@ -165,6 +178,7 @@ namespace PicoLightShow
             {
                 state = LightShowRunnerState::Stopping;
                 stopAnimationDone = false;
+                currentTransitionEffect->Init();
             }
             break;
         case LightShowRunnerState::Stopping:
@@ -172,6 +186,7 @@ namespace PicoLightShow
             {
                 state = LightShowRunnerState::Starting;
                 startAnimationDone = false;
+                currentTransitionEffect->Init();
             }
             if (stopAnimationDone)
             {

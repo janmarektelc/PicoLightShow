@@ -15,7 +15,7 @@ namespace PicoLightShow
     {
         int x = time < ledCount ? time : ledCount + (ledCount - time - 2);
         std::fill(buffer->begin(), buffer->end(), 0u);
-        buffer->at(x) = EncodeColor(255, 0, 0);
+        (*buffer)[x] = EncodeColor(255, 0, 0);
     }
 
     void RunningPoint::MoveTimeFrame()

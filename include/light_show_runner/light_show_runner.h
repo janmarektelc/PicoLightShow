@@ -5,6 +5,7 @@
 #include <string>
 
 #include "include/light_effects/light_effect_base.h"
+#include <include/transition_effects/transition_effect_base.h>
 
 namespace PicoLightShow
 {
@@ -59,11 +60,14 @@ namespace PicoLightShow
         static bool isSwitchOn;
         static std::vector<uint32_t>* ledBuffer;
         static LightEffectBase *currentLightEffect;
+        static TransitionEffectBase *currentTransitionEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
         static void SetEffectConfigurationString(std::string config);
 
         static void MoveStateMachine();
         static void RenderEffectFrame(uint32_t deltaMs);
+        
+        static int frame;
 
         static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateColorChange();

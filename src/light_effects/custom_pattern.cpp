@@ -52,7 +52,7 @@ namespace PicoLightShow
                 patternIndex += ColorPattern.size();
 
             if (patternIndex < ColorPattern.size())
-                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
+                (*buffer)[i] = EncodeColor(ColorPattern.at(patternIndex));
         }
     }
 
@@ -86,7 +86,7 @@ namespace PicoLightShow
             int patternIndex = (float)(x) / ((float)ledCount / ColorPattern.size()); //zero time state
 
             if (patternIndex < ColorPattern.size())
-                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
+                (*buffer)[i] = EncodeColor(ColorPattern.at(patternIndex));
         }
     }
 
@@ -117,9 +117,9 @@ namespace PicoLightShow
             int patternIndex = i - time;
 
             if (patternIndex >= 0 && patternIndex < ColorPattern.size())
-                buffer->at(i) = EncodeColor(ColorPattern.at(patternIndex));
+                (*buffer)[i] = EncodeColor(ColorPattern.at(patternIndex));
             else
-                buffer->at(i) = 0;
+                (*buffer)[i] = 0;
         }
     }
 
