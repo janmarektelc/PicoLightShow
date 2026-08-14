@@ -39,6 +39,7 @@ namespace PicoLightShow
 
     void CustomPattern::Init()
     {
+        time = 0;
     }
 
     void CustomPattern::DrawRepeat(std::vector<uint32_t>* buffer)

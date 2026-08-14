@@ -29,7 +29,12 @@ namespace PicoLightShow
 
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
     std::vector<uint32_t>* LightShowRunner::ledBuffer = nullptr;
+    
     bool LightShowRunner::isSwitchOn = true;
+    LightShowRunnerState LightShowRunner::state = LightShowRunnerState::Standby;
+    bool LightShowRunner::startAnimationDone = false;
+    bool LightShowRunner::stopAnimationDone = false;
+
     uint64_t LightShowRunner::lastFrameTimeUs = 0;
     uint32_t LightShowRunner::timeAccumulatorMs = 0;
 
@@ -83,24 +88,27 @@ namespace PicoLightShow
         }
         lastFrameTimeUs = time_us_64();;
 
-        if (isSwitchOn && !DDP::IsActive())
-        {
-            //if annimation is running, move time frame         
-            if (PersistentSettings::Settings.IsRunning)
-            {
-                uint8_t speed = PersistentSettings::Settings.Delay;
+        MoveStateMachine();
 
-                if (speed > 0) {
-                    timeAccumulatorMs += deltaMs;
-                    uint32_t stepIntervalMs = 15 + ((255 - speed) * 85) / 254;
-                    while (timeAccumulatorMs >= stepIntervalMs) {
-                        currentLightEffect->MoveTimeFrame();
-                        timeAccumulatorMs -= stepIntervalMs;
-                    }
-                }
+        if (!DDP::IsActive())
+        {
+            switch (state)
+            {
+                case LightShowRunnerState::Standby:
+                    std::fill(ledBuffer->begin(), ledBuffer->end(), 0u);
+                    break;
+                case LightShowRunnerState::Starting:
+                    RenderEffectFrame(deltaMs);
+                    startAnimationDone = true;
+                    break;
+                case LightShowRunnerState::Running:
+                    RenderEffectFrame(deltaMs);
+                    break;
+                case LightShowRunnerState::Stopping:
+                    RenderEffectFrame(deltaMs);
+                    stopAnimationDone = true;
+                    break;
             }
-            //draw to the buffer
-            currentLightEffect->Draw(ledBuffer);
 
             float fbrightness = ((float)PersistentSettings::Settings.Brightness) / 255.0f;
 
@@ -131,6 +139,70 @@ namespace PicoLightShow
         }
     }
 
+    void LightShowRunner::MoveStateMachine()
+    {
+        switch (state)
+        {
+        case LightShowRunnerState::Standby:
+            if (isSwitchOn)
+            {
+                state = LightShowRunnerState::Starting;
+                startAnimationDone = false;
+            }
+            break;
+        case LightShowRunnerState::Starting:
+            if (!isSwitchOn)
+            {
+                state = LightShowRunnerState::Standby;
+            }
+            if (startAnimationDone)
+            {
+                state = LightShowRunnerState::Running;
+            }
+            break;
+        case LightShowRunnerState::Running:
+            if (!isSwitchOn)
+            {
+                state = LightShowRunnerState::Stopping;
+                stopAnimationDone = false;
+            }
+            break;
+        case LightShowRunnerState::Stopping:
+            if (isSwitchOn)
+            {
+                state = LightShowRunnerState::Starting;
+                startAnimationDone = false;
+            }
+            if (stopAnimationDone)
+            {
+                state = LightShowRunnerState::Standby;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    void LightShowRunner::RenderEffectFrame(uint32_t deltaMs)
+    {
+        //if annimation is running, move time frame  
+        if (PersistentSettings::Settings.IsRunning)
+        {
+            uint8_t speed = PersistentSettings::Settings.Delay;
+
+            if (speed > 0) {
+                timeAccumulatorMs += deltaMs;
+                uint32_t stepIntervalMs = 15 + ((255 - speed) * 85) / 254;
+                while (timeAccumulatorMs >= stepIntervalMs) {
+                    currentLightEffect->MoveTimeFrame();
+                    timeAccumulatorMs -= stepIntervalMs;
+                }
+            }
+        }
+        //draw to the buffer
+        currentLightEffect->Draw(ledBuffer);
+    }
+
     void LightShowRunner::Start()
     {
         PersistentSettings::Settings.IsRunning = true;
@@ -150,7 +222,6 @@ namespace PicoLightShow
     void LightShowRunner::SwitchOff()
     {
         isSwitchOn = false;
-        LightShowRunner::FillColor(0, 0, 0);
     }
 
     bool LightShowRunner::GetIsRunning()

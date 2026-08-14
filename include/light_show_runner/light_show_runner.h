@@ -16,6 +16,14 @@ namespace PicoLightShow
         std::string Parameters;
     };
 
+    enum class LightShowRunnerState
+    {
+        Standby,
+        Starting,
+        Running,
+        Stopping
+    };
+
     class LightShowRunner
     {
     public:
@@ -43,6 +51,9 @@ namespace PicoLightShow
         static std::string GetEffectConfigurationString();
 
     private:
+        static LightShowRunnerState state;
+        static bool startAnimationDone;
+        static bool stopAnimationDone;
         static uint64_t lastFrameTimeUs;
         static uint32_t timeAccumulatorMs;
         static bool isSwitchOn;
@@ -50,6 +61,9 @@ namespace PicoLightShow
         static LightEffectBase *currentLightEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
         static void SetEffectConfigurationString(std::string config);
+
+        static void MoveStateMachine();
+        static void RenderEffectFrame(uint32_t deltaMs);
 
         static LightEffectBase *CreateCustomPattern();
         static LightEffectBase *CreateColorChange();
