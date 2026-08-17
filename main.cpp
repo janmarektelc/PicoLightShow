@@ -13,6 +13,7 @@ extern "C" {
 #include "include/ddp/ddp.h"
 #include "include/mqtt/mqtt_client.h"
 #include "include/mqtt/light_show_mqtt.h"
+#include "include/helpers/string_helper.h"
 
 void startAp(const char* ssid, const char* password) {
     cyw43_arch_enable_ap_mode(ssid, password, CYW43_AUTH_WPA2_AES_PSK);
@@ -92,15 +93,25 @@ int main()
     PicoLightShow::LightShowMqtt mqtt;
     if (isConnected) { // if is connected to wifi network as a client, connect to mqtt broker and initialize DDP
         PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
-        // mqtt.Connect("xxx.xxx.xxx.xx", 1883, "PicoLightShowClient", "user", "password");
-        mqtt.Connect("172.22.0.19", 1883, "PicoLightShowClient", "mqtt", "mqtt");
+
+        if (PicoLightShow::PersistentSettings::Settings.IsMqttEnabled)
+        {
+            mqtt.Connect(PicoLightShow::StringHelper::ConvertUint32ToIpString(PicoLightShow::PersistentSettings::Settings.MqttServerAddress).c_str(), 
+                PicoLightShow::PersistentSettings::Settings.MqttServerPort, 
+                "PicoLightShowClient", 
+                PicoLightShow::PersistentSettings::Settings.MqttUsername, 
+                PicoLightShow::PersistentSettings::Settings.MqttPassword);
+        }
     }
 
     while (true) {
         if (isConnected)
         {
             PicoLightShow::DDP::Poll();
-            mqtt.Poll();
+            if (PicoLightShow::PersistentSettings::Settings.IsMqttEnabled)
+            {
+                mqtt.Poll();
+            }
         }
         cyw43_arch_poll();
     }

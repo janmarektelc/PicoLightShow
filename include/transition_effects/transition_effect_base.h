@@ -15,6 +15,8 @@ namespace PicoLightShow
     public:
         TransitionEffectBase();
         virtual ~TransitionEffectBase();
+        virtual void SetDuration(uint32_t durationMs);
+        virtual uint32_t GetDuration();
         virtual void Init() = 0;
         virtual bool ApplyIn(std::vector<uint32_t>* buffer, uint32_t deltaMs) = 0;
         virtual bool ApplyOut(std::vector<uint32_t>* buffer, uint32_t deltaMs) = 0;

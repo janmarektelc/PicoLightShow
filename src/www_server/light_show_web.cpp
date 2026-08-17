@@ -71,6 +71,10 @@ namespace PicoLightShow
             LightShowRunner::SetEffect(std::stoi(req.parameters.at("effect")));
             return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
         }
+        if (req.uri == "/switch_transition_effect") {
+            LightShowRunner::SetTransitionEffect(std::stoi(req.parameters.at("effect")));
+            return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
+        }
         if (req.uri == "/reboot" || req.uri == "/reset") {
             watchdog_reboot(0,0,100);
             return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};

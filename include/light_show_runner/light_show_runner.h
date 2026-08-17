@@ -7,6 +7,7 @@
 #include "include/light_effects/light_effect_base.h"
 #include <include/transition_effects/transition_effect_base.h>
 #include <functional>
+#include <memory>
 
 namespace PicoLightShow
 {
@@ -16,6 +17,11 @@ namespace PicoLightShow
         std::string SetupPage;
         LightEffectBase *(*GetInstance)();
         std::string Parameters;
+    };
+
+    struct TransitionEffectDescriptor {
+        std::string EffectName;
+        std::function<std::unique_ptr<TransitionEffectBase>()> CreateInstance;
     };
 
     enum class LightShowRunnerState
@@ -53,6 +59,9 @@ namespace PicoLightShow
         static std::string GetEffectConfigurationString();
         static void SetSolidColor(uint8_t r, uint8_t g, uint8_t b);
         static Color GetSolidColor();
+        static uint32_t GetTransitionEffect();
+        static void SetTransitionEffect(uint32_t effect);
+        static std::vector<std::string> GetTransitionEffectNames();
         
         //callback for state change
         using OnStateChangedCallback = std::function<void()>;
@@ -68,8 +77,9 @@ namespace PicoLightShow
         static std::vector<uint32_t>* ledBuffer;
         static LightEffectBase *currentLightEffect;
         static uint32_t solidColorEffectIndex;
-        static TransitionEffectBase *currentTransitionEffect;
+        static std::unique_ptr<TransitionEffectBase> currentTransitionEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
+        static TransitionEffectDescriptor TransitionEffectDescriptors[];
         static void SetEffectConfigurationString(std::string config);
 
         static void MoveStateMachine();

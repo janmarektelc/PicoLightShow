@@ -31,8 +31,18 @@ namespace PicoLightShow
         //{"Running point simple", "", CreateRunningPoint, ""},
     };
 
+    TransitionEffectDescriptor LightShowRunner::TransitionEffectDescriptors[] = {
+        {"Sparkle", []() { return std::make_unique<SparkleTransitionEffect>(); }},
+        {"Wipe From Start", []() { return std::make_unique<WipeTransitionEffect>(WipeStyle::FromStart); }},
+        {"Wipe From End", []() { return std::make_unique<WipeTransitionEffect>(WipeStyle::FromEnd); }},
+        {"Wipe From Center", []() { return std::make_unique<WipeTransitionEffect>(WipeStyle::FromCenter); }},
+        {"Wipe To Center", []() { return std::make_unique<WipeTransitionEffect>(WipeStyle::ToCenter); }},
+        {"Flicker", []() { return std::make_unique<FlickerTransitionEffect>(); }},
+        {"Fade", []() { return std::make_unique<FadeTransitionEffect>(); }}
+    };
+
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
-    TransitionEffectBase *LightShowRunner::currentTransitionEffect = nullptr;
+    std::unique_ptr<TransitionEffectBase> LightShowRunner::currentTransitionEffect = nullptr;
     std::vector<uint32_t>* LightShowRunner::ledBuffer = nullptr;
     LightShowRunner::OnStateChangedCallback LightShowRunner::s_onStateChanged = nullptr;
     uint32_t LightShowRunner::solidColorEffectIndex = 0;
@@ -84,10 +94,7 @@ namespace PicoLightShow
 
         currentLightEffect->Init();
 
-        //currentTransitionEffect = new WipeTransitionEffect();
-        //currentTransitionEffect = new SparkleTransitionEffect();
-        currentTransitionEffect = new FlickerTransitionEffect();
-        //currentTransitionEffect = new FadeTransitionEffect();
+        SetTransitionEffect(PersistentSettings::Settings.TransitionEffectIndex);
     }
 
     void LightShowRunner::Pool()
@@ -378,6 +385,22 @@ namespace PicoLightShow
     Color LightShowRunner::GetSolidColor()
     {
         return Color(StringHelper::HexStringToUint32(LighShowEffectDescriptors[solidColorEffectIndex].Parameters.substr(6, 6)));
+    }
+
+    uint32_t LightShowRunner::GetTransitionEffect()
+    {
+        return 0;
+    }
+
+    void LightShowRunner::SetTransitionEffect(uint32_t effect)
+    {
+        currentTransitionEffect = TransitionEffectDescriptors[effect].CreateInstance();
+        currentTransitionEffect->SetDuration(PersistentSettings::Settings.TransitionEffectDurationMs);
+    }
+
+    std::vector<std::string> LightShowRunner::GetTransitionEffectNames()
+    {
+        return {"Wipe", "Sparkle", "Flicker", "Fade"};
     }
 
     void LightShowRunner::SetOnStateChangedCallback(OnStateChangedCallback cb) {

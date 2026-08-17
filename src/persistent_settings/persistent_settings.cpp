@@ -36,6 +36,14 @@ namespace PicoLightShow
             .LedCount = 20,
             .Brightness = 50,
             .CurrentEffectConfiguration = "",
+            .TransitionEffectIndex = 0,
+            .TransitionEffectDurationMs = 1500,
+            .IsMqttEnabled = false,
+            .MqttServerAddress = convertIpToUint32(0,0,0,0),
+            .MqttServerPort = 1883,
+            .MqttUsername = "",
+            .MqttPassword = "",
+            .MqttDiscoveryTopic = "homeassistant/light/pico_light_show/config"
         }; 
     }
 
@@ -44,6 +52,15 @@ namespace PicoLightShow
     void PersistentSettings::Load()
     {
         Load(&Settings, sizeof(Settings));
+
+        PicoLightShow::PersistentSettings::Settings.TransitionEffectIndex = 0;
+        PicoLightShow::PersistentSettings::Settings.TransitionEffectDurationMs = 1500;
+        PicoLightShow::PersistentSettings::Settings.IsMqttEnabled = true;
+        PicoLightShow::PersistentSettings::Settings.MqttServerAddress = convertIpToUint32(172,22,0,19);
+        PicoLightShow::PersistentSettings::Settings.MqttServerPort = 1883;
+        strcpy(PicoLightShow::PersistentSettings::Settings.MqttUsername, "mqtt");
+        strcpy(PicoLightShow::PersistentSettings::Settings.MqttPassword, "mqtt");
+        strcpy(PicoLightShow::PersistentSettings::Settings.MqttDiscoveryTopic, "homeassistant/light/pico_light_show/config");
     }
 
     void PersistentSettings::Save()

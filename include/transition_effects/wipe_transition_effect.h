@@ -15,7 +15,7 @@ namespace PicoLightShow
     class WipeTransitionEffect : public TransitionEffectBase
     {
     public:
-        WipeTransitionEffect();
+        WipeTransitionEffect(WipeStyle style = WipeStyle::FromStart);
         virtual ~WipeTransitionEffect();
         virtual void Init();
         virtual bool ApplyIn(std::vector<uint32_t>* buffer, uint32_t deltaMs);

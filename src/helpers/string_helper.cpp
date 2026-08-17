@@ -63,4 +63,17 @@ namespace PicoLightShow
 
         return outVal;
     }
+
+    std::string StringHelper::ConvertUint32ToIpString(uint32_t ip) 
+    {
+        uint8_t ip0 = static_cast<uint8_t>(ip & 0xFF);
+        uint8_t ip1 = static_cast<uint8_t>((ip >> 8) & 0xFF);
+        uint8_t ip2 = static_cast<uint8_t>((ip >> 16) & 0xFF);
+        uint8_t ip3 = static_cast<uint8_t>((ip >> 24) & 0xFF);
+
+        char buffer[16];
+        snprintf(buffer, sizeof(buffer), "%u.%u.%u.%u", ip0, ip1, ip2, ip3);
+
+        return std::string(buffer);
+    }
 }

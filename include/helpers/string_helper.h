@@ -17,6 +17,7 @@ namespace PicoLightShow
         static std::string ColorToString(Color color);
         static std::string ColorToString(uint8_t r, uint8_t g, uint8_t b);
         static uint32_t HexStringToUint32(std::string hexValue);
+        static std::string ConvertUint32ToIpString(uint32_t ip);
     };
 
 } // namespace PicoLightShow

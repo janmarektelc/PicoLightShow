@@ -2,10 +2,10 @@
 
 namespace PicoLightShow
 {
-    WipeTransitionEffect::WipeTransitionEffect()
+    WipeTransitionEffect::WipeTransitionEffect(WipeStyle style)
     {
         this->progress = 0.0f;
-        this->style = WipeStyle::FromCenter;
+        this->style = style;
     }
 
     WipeTransitionEffect::~WipeTransitionEffect()

@@ -16,4 +16,14 @@ namespace PicoLightShow
     {
     }
 
+    void TransitionEffectBase::SetDuration(uint32_t durationMs)
+    {
+        this->durationMs = durationMs;
+    }
+
+    uint32_t TransitionEffectBase::GetDuration()
+    {
+        return this->durationMs;
+    }
+
 } // namespace PicoLightShow

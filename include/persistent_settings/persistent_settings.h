@@ -28,6 +28,14 @@ namespace PicoLightShow
         uint32_t LedCount;
         uint8_t Brightness;
         char CurrentEffectConfiguration[128 + 1];
+        uint8_t TransitionEffectIndex;
+        uint32_t TransitionEffectDurationMs;
+        bool IsMqttEnabled;
+        uint32_t MqttServerAddress;
+        uint16_t MqttServerPort;
+        char MqttUsername[32 + 1];
+        char MqttPassword[32 + 1];
+        char MqttDiscoveryTopic[64 + 1];
     };
 
     class PersistentSettings

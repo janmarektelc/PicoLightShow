@@ -1,6 +1,7 @@
 #include "include/mqtt/light_show_mqtt.h"
 #include "include/light_show_runner/light_show_runner.h"
 #include "include/helpers/hw_infohelper.h"
+#include "include/persistent_settings/persistent_settings.h"
 #include <cstdio>
 #include <algorithm>
 
@@ -33,7 +34,6 @@ void LightShowMqtt::OnMqttConnected()
 
 void LightShowMqtt::SendAutoDiscovery() 
 {
-    const char* discoveryTopic = "homeassistant/light/pico_light_show/config";
     auto effects = LightShowRunner::GetEffectNames();
 
     std::string discoveryPayload = "{"
@@ -67,7 +67,7 @@ void LightShowMqtt::SendAutoDiscovery()
     }
     discoveryPayload += "]}";
 
-    Publish(discoveryTopic, discoveryPayload, true);
+    Publish(PersistentSettings::Settings.MqttDiscoveryTopic, discoveryPayload, true);
 }
 
 void LightShowMqtt::OnMqttMessage(const std::string& topic, const std::string& payload) 
