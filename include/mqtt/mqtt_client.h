@@ -32,6 +32,7 @@ protected:
     virtual void OnMqttConnected() {}
     virtual void OnMqttDisconnected() {}
     virtual void OnMqttMessage(const std::string& topic, const std::string& payload) {}
+    void Connect();
 
 private:
     tcp_pcb* m_pcb = nullptr;
@@ -41,6 +42,8 @@ private:
     std::string m_clientId;
     std::string m_username;
     std::string m_password;
+    std::string m_brokerIpStr;
+    uint16_t m_port;
 
     static void EncodeLength(size_t length, std::vector<uint8_t>& buffer);
     bool SendRawData(const uint8_t* data, size_t len);

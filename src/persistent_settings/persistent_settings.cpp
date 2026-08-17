@@ -43,7 +43,7 @@ namespace PicoLightShow
             .MqttServerPort = 1883,
             .MqttUsername = "",
             .MqttPassword = "",
-            .MqttDiscoveryTopic = "homeassistant/light/pico_light_show/config"
+            .MqttDiscoveryTopic = "homeassistant"
         }; 
     }
 
@@ -70,7 +70,6 @@ namespace PicoLightShow
         //~wifiMode(ap=0/client=1)~ssid~passwd~isdhcp(0/1)~ipAddress~ipMask~gwIp~mqttEnabled(0/1)~mqttip~mqttport~mqttuser~mqttpasswd~mqttdiscovery
     
         std::vector<std::string> segments = StringHelper::Split(cfg, '~');
-        printf(cfg.c_str());
 
         Settings.WifiMode = segments[1] == "0" ? AP : CLIENT;
         strcpy(Settings.WifiName, segments[2].c_str());
@@ -115,7 +114,6 @@ namespace PicoLightShow
         int page = GetMemoryPage();
         
         if (page == -1) {
-            printf("[LOAD] Zadne ulozene nastaveni nenalezeno (prázdna flash).\n");
             return;
         }
 
@@ -140,33 +138,34 @@ namespace PicoLightShow
     void PersistentSettings::Save(void *buffer, const uint32_t size)
     {
         int page = GetMemoryPage();
-        printf("[SAVE] page %d, data size %u B\n", page, size);
-
-        if (page == -1)
-        {
-            uint32_t ints = save_and_disable_interrupts();
-            flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
-            restore_interrupts(ints);
-            
-            page = 0;
-        }
 
         const uint32_t totalBytesNeeded = size + 1;
         const uint32_t flashWriteSize = ((totalBytesNeeded + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE) * FLASH_PAGE_SIZE;
 
-        std::vector<uint8_t> flash_data(flashWriteSize, 0xff);
+        constexpr uint32_t MAX_FLASH_BUFFER_SIZE = 512;
+        if (flashWriteSize > MAX_FLASH_BUFFER_SIZE) {
+            return;
+        }
 
+        uint8_t flash_data[MAX_FLASH_BUFFER_SIZE];
+        memset(flash_data, 0xff, MAX_FLASH_BUFFER_SIZE);
         flash_data[0] = FLASH_DATA_IDENTIFIER;
-        memcpy(flash_data.data() + 1, buffer, size);
+        memcpy(flash_data + 1, buffer, size);
 
+        bool needErase = (page == -1 || page > 14);
+        if (needErase) {
+            page = 0;
+        }
+
+        uint32_t targetAddress = FLASH_TARGET_OFFSET + (FLASH_PAGE_SIZE * page);
         uint32_t ints = save_and_disable_interrupts();
-        
-        flash_range_program(
-            FLASH_TARGET_OFFSET + (FLASH_PAGE_SIZE * page), 
-            flash_data.data(), 
-            flashWriteSize
-        );
-        
+
+        if (needErase) {
+            flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
+        }
+
+        flash_range_program(targetAddress, flash_data, flashWriteSize);
+
         restore_interrupts(ints);
     }
 }

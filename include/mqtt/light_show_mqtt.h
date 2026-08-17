@@ -14,6 +14,8 @@ protected:
     void OnMqttMessage(const std::string& topic, const std::string& payload) override;
 
 private:
+    std::string baseTopic;
+    std::string mac;
     void SendAutoDiscovery();
     void PublishState();
     bool ParseRgbPayload(const std::string& payload, uint8_t& r, uint8_t& g, uint8_t& b);

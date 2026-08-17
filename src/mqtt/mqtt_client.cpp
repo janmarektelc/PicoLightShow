@@ -1,4 +1,5 @@
 #include "include/mqtt/mqtt_client.h"
+#include "include/helpers/hw_infohelper.h"
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -21,6 +22,12 @@ void MqttClient::Poll() {
             SendPing();
         }
     }
+
+    if (m_state == MqttState::DISCONNECTED && now - m_lastSendTime >= 30000)
+    {
+        Connect();
+        m_lastSendTime = to_ms_since_boot(get_absolute_time());
+    }
 }
 
 void MqttClient::EncodeLength(size_t length, std::vector<uint8_t>& buffer) {
@@ -37,12 +44,25 @@ void MqttClient::EncodeLength(size_t length, std::vector<uint8_t>& buffer) {
 void MqttClient::Connect(const char* brokerIpStr, uint16_t port, const char* clientId, const char* user, const char* pass) {
     if (m_state != MqttState::DISCONNECTED) return;
 
-    m_clientId = clientId ? clientId : "PicoClient";
+    m_brokerIpStr = brokerIpStr;
+    m_port = port;
+
+    std::string mac = HWInfoHelper::GetMacAddress();
+    if (clientId && strlen(clientId) > 0) {
+        m_clientId = std::string(clientId) + "_" + mac;
+    } else {
+        m_clientId = "PicoClient_" + mac;
+    }
+
     m_username = user ? user : "";
     m_password = pass ? pass : "";
 
+    Connect();
+}
+
+void MqttClient::Connect(){
     ip_addr_t brokerIp;
-    if (!ipaddr_aton(brokerIpStr, &brokerIp)) {
+    if (!ipaddr_aton(m_brokerIpStr.c_str(), &brokerIp)) {
         printf("[MQTT-BASE] Error: Wrong mqtt broker address!\n");
         return;
     }
@@ -59,7 +79,7 @@ void MqttClient::Connect(const char* brokerIpStr, uint16_t port, const char* cli
 
     m_state = MqttState::CONNECTING;
 
-    tcp_connect(m_pcb, &brokerIp, port, OnTcpConnected);
+    tcp_connect(m_pcb, &brokerIp, m_port, OnTcpConnected);
 }
 
 err_t MqttClient::OnTcpConnected(void* arg, tcp_pcb* tpcb, err_t err) {

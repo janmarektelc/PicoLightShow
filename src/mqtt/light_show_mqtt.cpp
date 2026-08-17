@@ -9,6 +9,8 @@ namespace PicoLightShow {
 
 LightShowMqtt::LightShowMqtt()
 {
+    mac = HWInfoHelper::GetMacAddress();
+    baseTopic = "pico/" + mac + "/light/";
     //register callback for state change in LightShowRunner
     LightShowRunner::SetOnStateChangedCallback([this]() {
         if (IsConnected()) 
@@ -21,10 +23,10 @@ LightShowMqtt::LightShowMqtt()
 void LightShowMqtt::OnMqttConnected() 
 {
     // subscriptions
-    Subscribe("pico/light/switch");
-    Subscribe("pico/light/brightness/set");
-    Subscribe("pico/light/rgb/set");
-    Subscribe("pico/light/effect/set");
+    Subscribe(baseTopic + "switch/set");
+    Subscribe(baseTopic + "brightness/set");
+    Subscribe(baseTopic + "rgb/set");
+    Subscribe(baseTopic + "effect/set");
 
     // send start values
     PublishState();
@@ -35,44 +37,59 @@ void LightShowMqtt::OnMqttConnected()
 void LightShowMqtt::SendAutoDiscovery() 
 {
     auto effects = LightShowRunner::GetEffectNames();
+    std::string deviceName = "Pico Light Show " + mac.substr(mac.length() - 4);
+    std::string deviceId = "pico_light_show_" + mac;
+    std::string prefix = PersistentSettings::Settings.MqttDiscoveryTopic;
 
     std::string discoveryPayload = "{"
-        "\"name\":\"Pico Light Show\","
-        "\"unique_id\":\"pico_light_show_"+ HWInfoHelper::GetMacAddress() + "\","
+        "\"name\":\"" + deviceName + "\","
+        "\"unique_id\":\"" + deviceId + "\","
 
-        "\"cmd_t\":\"pico/light/switch\","
-        "\"stat_t\":\"pico/light/status\","
-        "\"pl_on\":\"ON\","
-        "\"pl_off\":\"OFF\","
+        "\"cmd_t\":\"" + baseTopic + "switch/set\","
+        "\"stat_t\":\"" + baseTopic + "switch/status\","
 
         // Brightness configuration
-        "\"bri_cmd_t\":\"pico/light/brightness/set\","
-        "\"bri_stat_t\":\"pico/light/brightness/status\","
+        "\"bri_cmd_t\":\"" + baseTopic + "brightness/set\","
+        "\"bri_stat_t\":\"" + baseTopic + "brightness/status\","
         "\"bri_scl\":255,"
 
         // RGB configuration
-        "\"rgb_cmd_t\":\"pico/light/rgb/set\","
-        "\"rgb_stat_t\":\"pico/light/rgb/status\","
+        "\"rgb_cmd_t\":\"" + baseTopic + "rgb/set\","
+        "\"rgb_stat_t\":\"" + baseTopic + "rgb/status\","
         "\"sup_clrm\":[\"rgb\"],"
         
         // Effects configurations
-        "\"fx_cmd_t\":\"pico/light/effect/set\","
-        "\"fx_stat_t\":\"pico/light/effect\","
+        "\"fx_cmd_t\":\"" + baseTopic + "effect/set\","
+        "\"fx_stat_t\":\"" + baseTopic + "effect/status\","
         "\"fx_list\":[";
+
     for (size_t i = 0; i < effects.size(); ++i) 
     {
         discoveryPayload += "\"" + effects[i] + "\"";
         if (i < effects.size() - 1) 
             discoveryPayload += ",";
     }
-    discoveryPayload += "]}";
 
-    Publish(PersistentSettings::Settings.MqttDiscoveryTopic, discoveryPayload, true);
+    discoveryPayload += "],"
+        "\"dev\":{"
+            "\"identifiers\":[\"" + deviceId + "\"]," 
+            "\"name\":\"" + deviceName + "\","
+            "\"model\":\"Raspberry Pi Pico W\"," 
+            "\"manufacturer\":\"Custom\""
+        "}"
+    "}";
+    
+    std::string discoveryTopic = prefix + "/light/" + deviceId + "/config";
+
+    printf("[MQTT] Posilam discovery : %s\n", discoveryPayload.c_str());
+    printf("[MQTT] Posilam discovery na topic: %s\n", discoveryTopic.c_str());
+
+    Publish(discoveryTopic, discoveryPayload, true);
 }
 
 void LightShowMqtt::OnMqttMessage(const std::string& topic, const std::string& payload) 
 {
-    if (topic == "pico/light/switch") {
+    if (topic == baseTopic + "switch/set") {
         if (payload == "ON")
         {
             LightShowRunner::SwitchOn();
@@ -82,27 +99,28 @@ void LightShowMqtt::OnMqttMessage(const std::string& topic, const std::string& p
             LightShowRunner::SwitchOff();
         }       
 
-        Publish("pico/light/status", LightShowRunner::GetSwitchOn() ? "ON" : "OFF", true);
+        Publish(baseTopic + "switch/status", LightShowRunner::GetSwitchOn() ? "ON" : "OFF", true);
     } 
-    else if (topic == "pico/light/brightness/set") {
+    else if (topic == baseTopic + "brightness/set") {
         int val = std::stoi(payload);
         auto brightness = static_cast<uint8_t>(std::clamp(val, 0, 255));
 
         LightShowRunner::SetBrightness(brightness);
         
-        Publish("pico/light/brightness/status", std::to_string(LightShowRunner::GetBrightness()), true);
+        Publish(baseTopic + "brightness/status", std::to_string(LightShowRunner::GetBrightness()), true);
     }
-    else if (topic == "pico/light/rgb/set") {
+    else if (topic == baseTopic + "rgb/set") {
         uint8_t r, g, b;
         if (ParseRgbPayload(payload, r, g, b)) {           
             LightShowRunner::SetSolidColor(r, g, b);
             std::string rgbStr = std::to_string(r) + "," + std::to_string(g) + "," + std::to_string(b);
-            Publish("pico/light/rgb/status", rgbStr, true);
+            
+            Publish(baseTopic + "rgb/status", rgbStr, true);
         } else {
             printf("[MQTT] Error by parsing RGB payload (%s)!\n", payload.c_str());
         }
     }
-    else if (topic == "pico/light/effect/set") {
+    else if (topic == baseTopic + "effect/set") {
         auto effects = LightShowRunner::GetEffectNames();
         auto it = std::find(effects.begin(), effects.end(), payload);
 
@@ -111,19 +129,20 @@ void LightShowMqtt::OnMqttMessage(const std::string& topic, const std::string& p
             LightShowRunner::SetEffect(static_cast<u32_t>(std::distance(effects.begin(), it)));
         }
 
-        Publish("pico/light/effect", LightShowRunner::GetEffectNames()[LightShowRunner::GetEffect()], true);
+        Publish(baseTopic + "effect/status", LightShowRunner::GetEffectNames()[LightShowRunner::GetEffect()], true);
     }
 }
 
 void LightShowMqtt::PublishState() 
 {
-    Publish("pico/light/status", LightShowRunner::GetSwitchOn() ? "ON" : "OFF", true);
-    Publish("pico/light/brightness/status", std::to_string(LightShowRunner::GetBrightness()), true);
-    Publish("pico/light/effect", LightShowRunner::GetEffectNames()[LightShowRunner::GetEffect()], true);
+    Publish(baseTopic + "switch/status", LightShowRunner::GetSwitchOn() ? "ON" : "OFF", true);
+    Publish(baseTopic + "brightness/status", std::to_string(LightShowRunner::GetBrightness()), true);
+    
+    Publish(baseTopic + "effect/status", LightShowRunner::GetEffectNames()[LightShowRunner::GetEffect()], true);
 
     Color solidColor = LightShowRunner::GetSolidColor();
     std::string rgbStr = std::to_string(solidColor.Red) + "," + std::to_string(solidColor.Green) + "," + std::to_string(solidColor.Blue);
-    Publish("pico/light/rgb/status", rgbStr, true);
+    Publish(baseTopic + "rgb/status", rgbStr, true);
 }
 
 bool LightShowMqtt::ParseRgbPayload(const std::string& payload, uint8_t& r, uint8_t& g, uint8_t& b) 
