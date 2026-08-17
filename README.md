@@ -11,6 +11,7 @@
 - **User-Friendly Interface:** The web interface is designed to be intuitive and easy to use, allowing users to quickly change light effect settings without the need for programming.
 - **OpenRGB / DDP Support:** Since version 0.9.3, the device natively supports the Distributed Display Protocol (DDP) on the default port 4048. This ensures seamless integration and real-time synchronization with OpenRGB.
 - **Home Assistant Integration:** Since version 0.9.4, the device natively supports the **WLED JSON API**, allowing seamless integration into **Home Assistant** for effortless control of effects, brightness, speed, presets, playlists, and segment freezing by embedded **WLED** integration.
+* **MQTT Protocol:** Native Home Assistant integration via **MQTT Auto-Discovery**. Automatically exposes power, brightness, RGB color selection and visual effects into your smart home dashboard with instant two-way state synchronization.
 
 ## Technical Specifications:
 
@@ -21,10 +22,11 @@
 - **Supported Protocols & APIs:**
   - **WLED JSON API:** For Home Assistant and smart home automation
   - **OpenRGB / DDP:** Real-time LED control via Distributed Display Protocol (UDP port 4048)
+  - **MQTT Protocol:** Full Home Assistant integration with MQTT Auto-Discovery, supporting state reporting, power, brightness, RGB colors and effects
 - **Web Server:** Hosted on the Raspberry Pi Pico, accessible via a web browser
 
 ## Download
-To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.4.uf2).
+To download the latest version of the PicoLightShow software, please click [here](releases/PicoLightShow-0.9.5.uf2).
 
 ## Hardware Setup
 
