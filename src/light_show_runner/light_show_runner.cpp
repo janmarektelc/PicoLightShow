@@ -34,6 +34,8 @@ namespace PicoLightShow
     LightEffectBase *LightShowRunner::currentLightEffect = nullptr;
     TransitionEffectBase *LightShowRunner::currentTransitionEffect = nullptr;
     std::vector<uint32_t>* LightShowRunner::ledBuffer = nullptr;
+    LightShowRunner::OnStateChangedCallback LightShowRunner::s_onStateChanged = nullptr;
+    uint32_t LightShowRunner::solidColorEffectIndex = 0;
     
     bool LightShowRunner::isSwitchOn = true;
     LightShowRunnerState LightShowRunner::state = LightShowRunnerState::Standby;
@@ -84,8 +86,8 @@ namespace PicoLightShow
 
         //currentTransitionEffect = new WipeTransitionEffect();
         //currentTransitionEffect = new SparkleTransitionEffect();
-        //currentTransitionEffect = new FlickerTransitionEffect();
-        currentTransitionEffect = new FadeTransitionEffect();
+        currentTransitionEffect = new FlickerTransitionEffect();
+        //currentTransitionEffect = new FadeTransitionEffect();
     }
 
     void LightShowRunner::Pool()
@@ -221,22 +223,26 @@ namespace PicoLightShow
     void LightShowRunner::Start()
     {
         PersistentSettings::Settings.IsRunning = true;
+        NotifyStateChanged();
     }
 
     void LightShowRunner::Stop()
     {
         PersistentSettings::Settings.IsRunning = false;
+        NotifyStateChanged();
     }
 
     void LightShowRunner::SwitchOn()
     {
         currentLightEffect->Init();
         isSwitchOn = true;
+        NotifyStateChanged();
     }
 
     void LightShowRunner::SwitchOff()
     {
         isSwitchOn = false;
+        NotifyStateChanged();
     }
 
     bool LightShowRunner::GetIsRunning()
@@ -282,6 +288,7 @@ namespace PicoLightShow
     void LightShowRunner::SetBrightness(uint8_t brightness)
     {
         PersistentSettings::Settings.Brightness = brightness;
+        NotifyStateChanged();
     }
 
     uint32_t LightShowRunner::GetEffect()
@@ -302,6 +309,7 @@ namespace PicoLightShow
         SetEffectConfigurationString(LighShowEffectDescriptors[effect].Parameters);
 
         currentLightEffect->Init();
+        NotifyStateChanged();
     }
 
     std::vector<std::string> LightShowRunner::GetEffectNames()
@@ -361,22 +369,27 @@ namespace PicoLightShow
         }
     }
 
-    void LightShowRunner::FillColor(Color color)
+    void LightShowRunner::SetSolidColor(uint8_t r, uint8_t g, uint8_t b)
     {
-        for (int i = 0; i < PersistentSettings::Settings.LedCount; i++)
-        {
-            LightShowRunner::PutPixel(color);
+        SetEffect(solidColorEffectIndex);
+        SetEffectProperty("color", StringHelper::ColorToString(r, g, b).c_str());
+    }
+
+    Color LightShowRunner::GetSolidColor()
+    {
+        return Color(StringHelper::HexStringToUint32(LighShowEffectDescriptors[solidColorEffectIndex].Parameters.substr(6, 6)));
+    }
+
+    void LightShowRunner::SetOnStateChangedCallback(OnStateChangedCallback cb) {
+        s_onStateChanged = cb;
+    }
+
+    void LightShowRunner::NotifyStateChanged() {
+        if (s_onStateChanged) {
+            s_onStateChanged();
         }
     }
 
-    void LightShowRunner::FillColor(uint8_t r, uint8_t g, uint8_t b)
-    {
-        for (int i = 0; i < PersistentSettings::Settings.LedCount; i++)
-        {
-            LightShowRunner::PutPixel(r, g, b);
-        }
-    }
-    
     void LightShowRunner::PutPixel(uint8_t r, uint8_t g, uint8_t b)
     {
         pio_sm_put_blocking(WS_PIO_INSTANCE, WS_STATE_MACHINE_INDEX,

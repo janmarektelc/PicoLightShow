@@ -6,7 +6,7 @@ namespace PicoLightShow {
 
 class LightShowMqtt : public MqttClient {
 public:
-    LightShowMqtt() = default;
+    LightShowMqtt();
 
 protected:
     // Implementation of metods from MqttClient
@@ -15,6 +15,8 @@ protected:
 
 private:
     void SendAutoDiscovery();
+    void PublishState();
+    bool ParseRgbPayload(const std::string& payload, uint8_t& r, uint8_t& g, uint8_t& b);
 };
 
 } // namespace PicoLightShow

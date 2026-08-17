@@ -89,18 +89,18 @@ int main()
     PicoLightShow::LightShowWeb webServer;
     webServer.start(80);
 
-    //PicoLightShow::LightShowMqtt mqtt;
+    PicoLightShow::LightShowMqtt mqtt;
     if (isConnected) { // if is connected to wifi network as a client, connect to mqtt broker and initialize DDP
         PicoLightShow::DDP::Init(PicoLightShow::PersistentSettings::Settings.LedCount);
         // mqtt.Connect("xxx.xxx.xxx.xx", 1883, "PicoLightShowClient", "user", "password");
-        // mqtt.Connect("172.22.0.19", 1883, "PicoLightShowClient", "mqtt", "mqtt");
+        mqtt.Connect("172.22.0.19", 1883, "PicoLightShowClient", "mqtt", "mqtt");
     }
 
     while (true) {
         if (isConnected)
         {
             PicoLightShow::DDP::Poll();
-            //mqtt.Poll();
+            mqtt.Poll();
         }
         cyw43_arch_poll();
     }

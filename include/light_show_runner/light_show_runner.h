@@ -6,6 +6,7 @@
 
 #include "include/light_effects/light_effect_base.h"
 #include <include/transition_effects/transition_effect_base.h>
+#include <functional>
 
 namespace PicoLightShow
 {
@@ -50,6 +51,12 @@ namespace PicoLightShow
         static std::vector<std::string> GetEffectSetupPages();
         static void SetEffectProperty(const char* name, const char* value);
         static std::string GetEffectConfigurationString();
+        static void SetSolidColor(uint8_t r, uint8_t g, uint8_t b);
+        static Color GetSolidColor();
+        
+        //callback for state change
+        using OnStateChangedCallback = std::function<void()>;
+        static void SetOnStateChangedCallback(OnStateChangedCallback cb);
 
     private:
         static LightShowRunnerState state;
@@ -60,6 +67,7 @@ namespace PicoLightShow
         static bool isSwitchOn;
         static std::vector<uint32_t>* ledBuffer;
         static LightEffectBase *currentLightEffect;
+        static uint32_t solidColorEffectIndex;
         static TransitionEffectBase *currentTransitionEffect;
         static LighShowEffectDescriptor LighShowEffectDescriptors[];
         static void SetEffectConfigurationString(std::string config);
@@ -74,8 +82,10 @@ namespace PicoLightShow
         static LightEffectBase *CreateRunningPoint();
         static LightEffectBase *CreateSolidColor();
 
-        static void FillColor(Color color);
-        static void FillColor(uint8_t r, uint8_t g, uint8_t b);
+        // callback for state change
+        static OnStateChangedCallback s_onStateChanged;
+        static void NotifyStateChanged();
+
         static void PutPixel(uint8_t r, uint8_t g, uint8_t b);
         static void PutPixel(Color color);
     };

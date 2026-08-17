@@ -15,6 +15,7 @@ namespace PicoLightShow
         static std::vector<std::string> Split(std::string str, char delim);
         static std::string ColorsToString(std::vector<Color> colors);
         static std::string ColorToString(Color color);
+        static std::string ColorToString(uint8_t r, uint8_t g, uint8_t b);
         static uint32_t HexStringToUint32(std::string hexValue);
     };
 
