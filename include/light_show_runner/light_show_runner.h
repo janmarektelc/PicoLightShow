@@ -61,6 +61,8 @@ namespace PicoLightShow
         static Color GetSolidColor();
         static uint32_t GetTransitionEffect();
         static void SetTransitionEffect(uint32_t effect);
+        static void SetTransitionEffectDuration(uint32_t duration);
+        static uint32_t GetTransitionEffectDuration();
         static std::vector<std::string> GetTransitionEffectNames();
         
         //callback for state change

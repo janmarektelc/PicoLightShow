@@ -75,6 +75,22 @@ namespace PicoLightShow
                 }
                 break;
             }
+
+            case WipeStyle::ToCenter: {
+                size_t visibleLeds = static_cast<size_t>(totalLeds * visibleRatio);
+                size_t hiddenLeds = totalLeds - visibleLeds;
+                
+                size_t halfTotal = totalLeds / 2;
+                size_t halfHidden = hiddenLeds / 2;
+
+                size_t hideStartIdx = (halfTotal > halfHidden) ? (halfTotal - halfHidden) : 0;
+                size_t hideEndIdx = std::min(totalLeds, halfTotal + halfHidden + (hiddenLeds % 2));
+
+                for (size_t i = hideStartIdx; i < hideEndIdx; ++i) {
+                    (*buffer)[i] = 0x000000;
+                }
+                break;
+            }
         }
     }
 } // namespace PicoLightShow

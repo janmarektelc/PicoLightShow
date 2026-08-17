@@ -75,6 +75,10 @@ namespace PicoLightShow
             LightShowRunner::SetTransitionEffect(std::stoi(req.parameters.at("effect")));
             return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
         }
+        if (req.uri == "/set_transition_effect") {
+            LightShowRunner::SetTransitionEffectDuration(std::stoi(req.parameters.at("duration")));
+            return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
+        }
         if (req.uri == "/reboot" || req.uri == "/reset") {
             watchdog_reboot(0,0,100);
             return {200, std::make_unique<FlashSource>(PicoLightShow::Assets::success_html, PicoLightShow::Assets::success_html_size), "text/html"};
@@ -173,6 +177,16 @@ namespace PicoLightShow
                 }
                 effectsList += ">" + effectNames[i] + "</option>";
             }
+            
+            std::vector<std::string> transitionEffectNames = LightShowRunner::GetTransitionEffectNames();
+            std::string transitionEffectsList = "";
+            for (size_t i = 0; i < transitionEffectNames.size(); i++) {
+                transitionEffectsList += "<option value=\"" + std::to_string(i) + "\"";
+                if (static_cast<int>(i) == LightShowRunner::GetTransitionEffect()) {
+                    transitionEffectsList += " selected=\"selected\"";
+                }
+                transitionEffectsList += ">" + transitionEffectNames[i] + "</option>";
+            }
 
             std::string html = R"raw(<div class="d-flex flex-column">
                 <div class="d-sm-inline-flex align-items-center">
@@ -186,6 +200,14 @@ namespace PicoLightShow
                         <div class="mx-2 text-nowrap">LED count</div>
                         <input type="number" min="1" max="500" value=")raw" + std::to_string(ledCount) + R"raw(" onchange="setLedCount(value)" />
                     </div>
+                </div>
+                <div class="d-sm-inline-flex align-items-center">
+                    <div class="mx-2 text-nowrap">Turn on/off effect</div>
+                    <select class="form-select" id="transitionEffectSelect" onchange="httpGet('/switch_transition_effect?effect=' + this.value)">
+                        )raw" + transitionEffectsList + R"raw(
+                    </select>
+                    <div class="mx-2 text-nowrap">Effect duration in ms</div>
+                    <input type="number" min="0" max="5000" value=")raw" + std::to_string(LightShowRunner::GetTransitionEffectDuration()) + R"raw(" onchange="httpGet('/set_transition_effect?duration=' + this.value)" />
                 </div>
                 <div id="effectCustomSetup"></div>
             </div>

@@ -394,13 +394,32 @@ namespace PicoLightShow
 
     void LightShowRunner::SetTransitionEffect(uint32_t effect)
     {
+        PersistentSettings::Settings.TransitionEffectIndex = effect;
         currentTransitionEffect = TransitionEffectDescriptors[effect].CreateInstance();
         currentTransitionEffect->SetDuration(PersistentSettings::Settings.TransitionEffectDurationMs);
     }
 
+    void LightShowRunner::SetTransitionEffectDuration(uint32_t duration)
+    {
+        PersistentSettings::Settings.TransitionEffectDurationMs = duration;
+        currentTransitionEffect->SetDuration(duration);
+    }
+
+    uint32_t LightShowRunner::GetTransitionEffectDuration()
+    {
+        return currentTransitionEffect->GetDuration();
+    }
+
     std::vector<std::string> LightShowRunner::GetTransitionEffectNames()
     {
-        return {"Wipe", "Sparkle", "Flicker", "Fade"};
+        int arraySize = sizeof(TransitionEffectDescriptors) / sizeof(TransitionEffectDescriptors[0]); 
+        std::vector<std::string> vect;
+        for (int i=0; i<arraySize; i++)
+        {
+            vect.push_back(TransitionEffectDescriptors[i].EffectName);
+        }
+
+        return vect;
     }
 
     void LightShowRunner::SetOnStateChangedCallback(OnStateChangedCallback cb) {
