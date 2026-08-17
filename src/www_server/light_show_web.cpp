@@ -91,7 +91,7 @@ namespace PicoLightShow
         }
         if (req.uri == "/network_data") {
             //expected data format
-            //~wifiMode(ap=0/client=1)~ssid~passwd~isdhcp(0/1)~ipAddress~ipMask~gwIp~
+            //~wifiMode(ap=0/client=1)~ssid~passwd~isdhcp(0/1)~ipAddress~ipMask~gwIp~mqttEnabled(0/1)~mqttip~mqttport~mqttuser~mqttpasswd~mqttdiscovery
             PicoLightShow::PersistentSettings::SetByConfigString(req.body);
             strcpy(PicoLightShow::PersistentSettings::Settings.CurrentEffectConfiguration, PicoLightShow::LightShowRunner::GetEffectConfigurationString().c_str());
             PicoLightShow::PersistentSettings::Save();
@@ -180,9 +180,10 @@ namespace PicoLightShow
             
             std::vector<std::string> transitionEffectNames = LightShowRunner::GetTransitionEffectNames();
             std::string transitionEffectsList = "";
+            int currentTransitionEffect = LightShowRunner::GetTransitionEffect();
             for (size_t i = 0; i < transitionEffectNames.size(); i++) {
                 transitionEffectsList += "<option value=\"" + std::to_string(i) + "\"";
-                if (static_cast<int>(i) == LightShowRunner::GetTransitionEffect()) {
+                if (static_cast<int>(i) == currentTransitionEffect) {
                     transitionEffectsList += " selected=\"selected\"";
                 }
                 transitionEffectsList += ">" + transitionEffectNames[i] + "</option>";
@@ -348,6 +349,7 @@ namespace PicoLightShow
         if (req.uri == "/connection_setup.shtml") {
             std::string wifiModes = PersistentSettings::Settings.WifiMode == AP ? "<option value=\"0\" selected=\"selected\">Access point</option><option value=\"1\">Client</option>" : "<option value=\"0\">Access point</option><option value=\"1\" selected=\"selected\">Client</option>";
             std::string isDhcp = PersistentSettings::Settings.IsDhcp ? "checked" : "";
+            std::string isMqtt = PersistentSettings::Settings.IsMqttEnabled ? "checked" : "";
             std::string html = R"raw(<div class="container p-0">
                 <div class="alert alert-info" role="alert">
                     After changing the connection parameters, it is necessary to save these changes and restart the device to apply them. New connection settings will be used after the device reboots.
@@ -481,6 +483,98 @@ namespace PicoLightShow
                         <input id="gw2" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.GatewayAddress >> 8) & 0xFF) + R"raw(" />.
                         <input id="gw3" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.GatewayAddress >> 16) & 0xFF) + R"raw(" />.
                         <input id="gw4" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.GatewayAddress >> 24) & 0xFF) + R"raw(" />
+                    </div>
+                </div>
+
+                <div class="row align-items-center mb-2" id="mqttEnabledRow">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hdd-network-fill" viewBox="0 0 16 16">
+                                <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H.5a.5.5 0 0 0 0 1H6A1.5 1.5 0 0 0 7.5 14h1a1.5 1.5 0 0 0 1.5-1.5h5.5a.5.5 0 0 0 0-1H10A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">Enable MQTT</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="form-check form-switch">
+                            <input id="ismqqt" class="form-check-input" type="checkbox" role="switch" id="isDhcp" )raw" + isMqtt + R"raw( />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row align-items-center mb-2" id="mqttIpAddressRow">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-pci-card-network" viewBox="0 0 16 16">
+                                <path d="M6.5 9.5v-2h.214a.5.5 0 0 0 .5-.5v-.5h2.572V7a.5.5 0 0 0 .5.5h.214v2z"/>
+                                <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .5.5V4h13.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2v2.5a.5.5 0 0 1-1 0V2H.5a.5.5 0 0 1-.5-.5m6.714 4a.5.5 0 0 0-.5.5v.5H6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5V7a.5.5 0 0 0-.5-.5h-.214V6a.5.5 0 0 0-.5-.5z"/>
+                                <path d="M3 12.5h3.5v1a.5.5 0 0 1-.5.5H3.5a.5.5 0 0 1-.5-.5zm8 0H7v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5z"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">Mqtt server address</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8 d-inline-flex">
+                        <input id="mqttip1" type="number" min="0" max="255" value=")raw" + std::to_string(PersistentSettings::Settings.MqttServerAddress & 0xFF) + R"raw(" />.
+                        <input id="mqttip2" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.MqttServerAddress >> 8) & 0xFF) + R"raw(" />.
+                        <input id="mqttip3" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.MqttServerAddress >> 16) & 0xFF) + R"raw(" />.
+                        <input id="mqttip4" type="number" min="0" max="255" value=")raw" + std::to_string((PersistentSettings::Settings.MqttServerAddress >> 24) & 0xFF) + R"raw(" />
+                    </div>
+                </div>
+                                
+                <div class="row align-items-center mb-2" id="mqttPortRow">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hdd-network-fill" viewBox="0 0 16 16">
+                                <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H.5a.5.5 0 0 0 0 1H6A1.5 1.5 0 0 0 7.5 14h1a1.5 1.5 0 0 0 1.5-1.5h5.5a.5.5 0 0 0 0-1H10A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">MQTT server port</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <input id="mqttport" type="number" value=")raw" + std::to_string(PersistentSettings::Settings.MqttServerPort) + R"raw(" />
+                    </div>
+                </div>              
+                
+                <div class="row align-items-center mb-2">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-key-fill" viewBox="0 0 16 16">
+                                <path d="M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2M2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">MQTT user</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <input class="w-100" id="mqttuser" type="text" value=")raw" + PersistentSettings::Settings.MqttUsername + R"raw(" />
+                    </div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-key-fill" viewBox="0 0 16 16">
+                                <path d="M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2M2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">MQTT password</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <input class="w-100" id="mqttpass" type="password" value=")raw" + PersistentSettings::Settings.MqttPassword + R"raw(" />
+                    </div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-sm-4">
+                        <div class="d-inline-flex align-items-center pt-2 pt-sm-0 ps-sm-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-wifi" viewBox="0 0 16 16">
+                                <path d="M15.384 6.115a.485.485 0 0 0-.047-.736A12.44 12.44 0 0 0 8 3C5.259 3 2.723 3.882.663 5.379a.485.485 0 0 0-.048.736.52.52 0 0 0 .668.05A11.45 11.45 0 0 1 8 4c2.507 0 4.827.802 6.716 2.164.205.148.49.13.668-.049"/>
+                                <path d="M13.229 8.271a.482.482 0 0 0-.063-.745A9.46 9.46 0 0 0 8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065A8.46 8.46 0 0 1 8 7a8.46 8.46 0 0 1 4.576 1.336c.206.132.48.108.653-.065m-2.183 2.183c.226-.226.185-.605-.1-.75A6.5 6.5 0 0 0 8 9c-1.06 0-2.062.254-2.946.704-.285.145-.326.524-.1.75l.015.015c.16.16.407.19.611.09A5.5 5.5 0 0 1 8 10c.868 0 1.69.201 2.42.56.203.1.45.07.61-.091zM9.06 12.44c.196-.196.198-.52-.04-.66A2 2 0 0 0 8 11.5a2 2 0 0 0-1.02.28c-.238.14-.236.464-.04.66l.706.706a.5.5 0 0 0 .707 0l.707-.707z"/>
+                            </svg>
+                            <div class="mx-2 text-nowrap">MQTT discovery topic</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <input class="w-100" id="mqttdiscovery" type="text" value=")raw" + PersistentSettings::Settings.MqttDiscoveryTopic + R"raw(" />
                     </div>
                 </div>
                     

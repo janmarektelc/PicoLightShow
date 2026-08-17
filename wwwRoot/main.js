@@ -103,6 +103,12 @@ function saveSettings()
     +document.getElementById("ip1").value+'.'+document.getElementById("ip2").value+'.'+document.getElementById("ip3").value+'.'+document.getElementById("ip4").value+'~'
     +document.getElementById("mask1").value+'.'+document.getElementById("mask2").value+'.'+document.getElementById("mask3").value+'.'+document.getElementById("mask4").value+'~'
     +document.getElementById("gw1").value+'.'+document.getElementById("gw2").value+'.'+document.getElementById("gw3").value+'.'+document.getElementById("gw4").value+'~'
+    +(document.getElementById("ismqqt").checked ? '1~' : '0~')
+    +document.getElementById("mqttip1").value+'.'+document.getElementById("mqttip2").value+'.'+document.getElementById("mqttip3").value+'.'+document.getElementById("mqttip4").value+'~'
+    +document.getElementById("mqttport").value+'~'
+    +document.getElementById("mqttuser").value+'~'
+    +document.getElementById("mqttpass").value+'~'
+    +document.getElementById("mqttdiscovery").value+'~'
     ;
   xhr.onreadystatechange = function() {
     if (xhr.readyState  == XMLHttpRequest.DONE)

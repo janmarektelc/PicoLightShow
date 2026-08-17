@@ -389,7 +389,7 @@ namespace PicoLightShow
 
     uint32_t LightShowRunner::GetTransitionEffect()
     {
-        return 0;
+        return PersistentSettings::Settings.TransitionEffectIndex;
     }
 
     void LightShowRunner::SetTransitionEffect(uint32_t effect)
