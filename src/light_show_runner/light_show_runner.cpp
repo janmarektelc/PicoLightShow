@@ -47,7 +47,7 @@ namespace PicoLightShow
     LightShowRunner::OnStateChangedCallback LightShowRunner::s_onStateChanged = nullptr;
     uint32_t LightShowRunner::solidColorEffectIndex = 0;
     
-    bool LightShowRunner::isSwitchOn = true;
+    bool LightShowRunner::isSwitchOn = false;
     LightShowRunnerState LightShowRunner::state = LightShowRunnerState::Standby;
     bool LightShowRunner::startAnimationDone = false;
     bool LightShowRunner::stopAnimationDone = false;
