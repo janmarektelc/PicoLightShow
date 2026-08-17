@@ -109,79 +109,34 @@ namespace PicoLightShow
         return -1;
     }
 
-    // void PersistentSettings::Load(void *buffer, const uint32_t size)
-    // {
-    //     int page = GetMemoryPage();
-    //     if (page == -1)
-    //         page = FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
-    //     page--;
-    //     const uint8_t *flash_data = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET + FLASH_PAGE_SIZE * page);
-    //     if (flash_data[0] != FLASH_DATA_IDENTIFIER)
-    //         return;
-
-    //     memcpy(buffer, flash_data + 1, size);
-    // }
 
     void PersistentSettings::Load(void *buffer, const uint32_t size)
     {
         int page = GetMemoryPage();
         
-        // Pokud je sektor prázdný (GetMemoryPage vrátil -1), není co načítat
         if (page == -1) {
             printf("[LOAD] Zadne ulozene nastaveni nenalezeno (prázdna flash).\n");
             return;
         }
 
-        // Pokud GetMemoryPage vrací index PRVNÍ VOLNÉ stránky, 
-        // musíme zkontrolovat, kolik stránek tvoje struktura zabírá!
-        // Spočítáme si, kolik stránek struktura ve Flash zabírá:
         const uint32_t totalBytesNeeded = size + 1;
         const uint32_t pagesPerSettings = (totalBytesNeeded + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE;
 
-        // Najdeme počáteční stránku POSLEDNÍHO platného bloku uložení:
         int startPage = page - pagesPerSettings;
 
         if (startPage < 0) {
-            printf("[LOAD] Neplatny index stranky pro nacteni!\n");
             return;
         }
 
-        // Přímý ukazatel do paměťově mapované Flash paměti (XIP)
         const uint8_t *flash_data = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET + (FLASH_PAGE_SIZE * startPage));
 
-        // Kontrola magického identifikátoru na ZAČÁTKU bloku
         if (flash_data[0] != FLASH_DATA_IDENTIFIER) {
-            printf("[LOAD] Chyba: Magicky identifikator na offsetu nesouhlasi (0x%02X)!\n", flash_data[0]);
             return;
         }
 
-        // Kopírování dat struktury z Flash do RAM bufferu (přeskočíme 1B identifikátor)
         memcpy(buffer, flash_data + 1, size);
-        
-        printf("[LOAD] Nastaveni uspesne nacteno ze stranky %d (%u B).\n", startPage, size);
     }
 
-    // void PersistentSettings::Save(void *buffer, const uint32_t size)
-    // {
-    //     int page = GetMemoryPage();
-    //     printf("[SAVE] page %i size %i", page, size);
-    //     if (page == -1)
-    //     {
-    //         flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
-    //         page = 0;
-    //     }
-
-    //     uint8_t flash_data[FLASH_PAGE_SIZE];
-    //     printf("[SAVE] step 1");
-    //     memset(flash_data, 0xff, FLASH_PAGE_SIZE);
-    //     flash_data[0] = FLASH_DATA_IDENTIFIER;
-    //     printf("[SAVE] step 2");
-    //     memcpy(flash_data + 1, buffer, size);
-    //     const uint32_t ints = save_and_disable_interrupts();
-    //     flash_range_program(FLASH_TARGET_OFFSET + FLASH_PAGE_SIZE * page, flash_data, FLASH_PAGE_SIZE);
-    //     restore_interrupts(ints);
-    //     printf("[SAVE] step 3");
-    // }
     void PersistentSettings::Save(void *buffer, const uint32_t size)
     {
         int page = GetMemoryPage();
@@ -189,8 +144,6 @@ namespace PicoLightShow
 
         if (page == -1)
         {
-            // Vymazání sektoru (SECTOR_SIZE je 4096 B)
-            // Pozor: flash_range_erase musí běžet s vypnutým přerušením!
             uint32_t ints = save_and_disable_interrupts();
             flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
             restore_interrupts(ints);
@@ -198,19 +151,14 @@ namespace PicoLightShow
             page = 0;
         }
 
-        // 1. Spočítáme, kolik 256B stránek potřebujeme pro uložení identifieru (1B) + dat (size B)
         const uint32_t totalBytesNeeded = size + 1;
-        // Zaokrouhlíme nahoru na nejbližší násobek FLASH_PAGE_SIZE (256, 512, 768...)
         const uint32_t flashWriteSize = ((totalBytesNeeded + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE) * FLASH_PAGE_SIZE;
 
-        // 2. Alokujeme dostatečně velký buffer
         std::vector<uint8_t> flash_data(flashWriteSize, 0xff);
 
-        // 3. Naplníme hlavičku a data
         flash_data[0] = FLASH_DATA_IDENTIFIER;
         memcpy(flash_data.data() + 1, buffer, size);
 
-        // 4. BEZPEČNÝ ZÁPIS DO FLASH (žádné printf uvnitř!)
         uint32_t ints = save_and_disable_interrupts();
         
         flash_range_program(
@@ -220,10 +168,5 @@ namespace PicoLightShow
         );
         
         restore_interrupts(ints);
-
-        // 5. Diagnostika až po obnovení přerušení
-        printf("[SAVE] Uspesne ulozeno (%u B zapisujes do flash offsetu 0x%X)\n", 
-            flashWriteSize, 
-            FLASH_TARGET_OFFSET + (FLASH_PAGE_SIZE * page));
     }
 }
