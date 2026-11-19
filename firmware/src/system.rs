@@ -51,24 +51,22 @@ pub async fn reboot_task() {
     REBOOT.wait().await;
     log::info!("rebooting...");
     Timer::after_millis(800).await;
-    unsafe { (&raw mut REBOOT_FLAG).cast::<u32>().write_volatile(REBOOT_MAGIC) };
+    embassy_rp::pac::WATCHDOG.scratch0().write_value(REBOOT_MAGIC);
     cortex_m::peripheral::SCB::sys_reset();
 }
 
 const REBOOT_MAGIC: u32 = 0x5242_5154;
+/// Watchdog scratch register used for the "requested reboot" marker. It survives
+/// a software reset and the bootloader's update swap, and unlike a RAM variable its
+/// location does not depend on the memory layout of the firmware version.
+/// (Scratch 0 is used; the boot ROM only uses scratch 4..7.)
 
-/// Set right before a requested reboot (web UI, OTA, MQTT), survives the reset.
-#[unsafe(link_section = ".uninit.REBOOT")]
-static mut REBOOT_FLAG: MaybeUninit<u32> = MaybeUninit::uninit();
-
-/// True if the previous run ended with a requested reboot (clears the flag).
+/// True if the previous run ended with a requested reboot (clears the marker).
 pub fn take_planned_reboot() -> bool {
-    unsafe {
-        let p = (&raw mut REBOOT_FLAG).cast::<u32>();
-        let planned = p.read_volatile() == REBOOT_MAGIC;
-        p.write_volatile(0);
-        planned
-    }
+    let reg = embassy_rp::pac::WATCHDOG.scratch0();
+    let planned = reg.read() == REBOOT_MAGIC;
+    reg.write_value(0);
+    planned
 }
 
 // ---------------------------------------------------------------------------

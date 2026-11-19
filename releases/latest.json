@@ -1,7 +1,7 @@
 {
-  "version": "1.1.1",
-  "ota": "1.1.1/pico-light-show-1.1.1-ota.bin",
-  "size": 825920,
-  "sha256": "a55a7641da437e85f58d32fdd76f72031f4c8a030d3fc078655df993dbd74673",
-  "notes": "New: Reset to defaults button restores the colors and options of the selected effect."
+  "version": "1.1.2",
+  "ota": "1.1.2/pico-light-show-1.1.2-ota.bin",
+  "size": 825984,
+  "sha256": "770cdd108fbebb1319bc17e1fcec0a192cd801e45ab9f595e39bc95d99c58b68",
+  "notes": "Fix: the System page reported a watchdog timeout instead of a normal reboot after a firmware update."
 }

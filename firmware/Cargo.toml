@@ -1,6 +1,6 @@
 [package]
 name = "pico-light-show"
-version = "1.1.1"
+version = "1.1.2"
 edition = "2024"
 description = "WS2812 LED controller firmware for Raspberry Pi Pico W (web UI, MQTT, DDP, OTA)"
 license = "MIT OR Apache-2.0"

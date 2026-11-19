@@ -238,6 +238,13 @@ async fn main_task(spawner: Spawner, p: embassy_rp::Peripherals) {
     );
     system::stage(1);
     log::info!("Pico Light Show {} starting (reset reason: {:?})", system::VERSION, reset_reason);
+    {
+        let w = embassy_rp::pac::WATCHDOG;
+        if w.scratch2().read() == 0x5357_4150 {
+            log::info!("bootloader: swap took {} bootloader run(s)", w.scratch1().read());
+            w.scratch2().write_value(0);
+        }
+    }
     let crumb = BOOTLOADER_CRUMB.load(portable_atomic::Ordering::Relaxed);
     if crumb == 0 {
         log::info!("bootloader: none (standalone build or first start)");

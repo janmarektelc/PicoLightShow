@@ -23,6 +23,7 @@ use embassy_time::Duration;
 
 const FLASH_SIZE: usize = 2 * 1024 * 1024;
 const SWAP_MAGIC: u8 = 0xF0;
+const SWAP_COUNT_MAGIC: u32 = 0x5357_4150;
 
 /// Breadcrumb for the application (read and logged by its console build).
 const BREADCRUMB: *mut u32 = 0x2004_1000 as *mut u32;
@@ -69,6 +70,16 @@ fn main() -> ! {
         w.set_cycles(12);
         w.set_enable(true);
     });
+
+    // Count bootloader runs that perform a swap (watchdog scratch 1/2): more
+    // than one per update means the watchdog fired during the swap.
+    let w = pac::WATCHDOG;
+    if w.scratch2().read() == SWAP_COUNT_MAGIC {
+        w.scratch1().write_value(w.scratch1().read().wrapping_add(1));
+    } else {
+        w.scratch2().write_value(SWAP_COUNT_MAGIC);
+        w.scratch1().write_value(1);
+    }
 
     let p = unsafe { embassy_rp::Peripherals::steal() };
     let flash = WatchdogFlash::<FLASH_SIZE>::start(p.FLASH, p.WATCHDOG, Duration::from_secs(8));
