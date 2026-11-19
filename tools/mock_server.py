@@ -70,6 +70,8 @@ def apply(u):
     for k in ("on", "brightness", "speed", "running", "effect", "transition", "transition_ms"):
         if k in u:
             state[k] = u[k]
+    if u.get("reset"):
+        params.pop(state["effect"], None)
     if u.get("toggle"):
         state["on"] = not state["on"]
     p = effect_params(state["effect"])

@@ -127,6 +127,16 @@ function applyState(s) {
   if (c !== '#000000') document.documentElement.style.setProperty('--accent', c);
 }
 
+$('#effectReset').onclick = async () => {
+  try {
+    const s = await api('/api/state', { body: { reset: true } });
+    editing = 0;
+    applyState(s);
+    renderEffectSettings();
+    toast(`${meta.effects[s.effect].name}: default settings restored`);
+  } catch (e) { toast(e.message, true); }
+};
+
 function setSlider(id, v) {
   $('#' + id).value = v;
   $('#' + id + 'Out').textContent = Math.round(v * 100 / 255) + '%';

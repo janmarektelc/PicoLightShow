@@ -168,7 +168,7 @@ power limit apply to DDP too.
 
 | Method | Path | Description |
 |---|---|---|
-| GET/POST | `/api/state` | light state; POST accepts any subset of `on, toggle, brightness, speed, running, effect, transition, transition_ms, colors, opts, preset` |
+| GET/POST | `/api/state` | light state; POST accepts any subset of `on, toggle, brightness, speed, running, effect, transition, transition_ms, colors, opts, preset`; `{"reset":true}` restores the default colors and options of the current effect |
 | GET | `/api/effects` | effect metadata (names, colors, options) and transition names |
 | GET | `/api/info` | version, uptime, network, MQTT status |
 | GET/POST | `/api/presets` | list / save (`{"name":"…"}` stores the current look) |

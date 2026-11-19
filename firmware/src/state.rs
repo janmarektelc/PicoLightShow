@@ -118,6 +118,8 @@ pub struct StateUpdate {
     pub opts: Option<Vec<u8, MAX_OPTS>>,
     /// Apply a stored preset (index).
     pub preset: Option<u8>,
+    /// Reset colors and options of the current effect to its defaults.
+    pub reset: Option<bool>,
 }
 
 pub fn apply(u: &StateUpdate) {
@@ -159,6 +161,9 @@ pub fn apply(u: &StateUpdate) {
             s.transition_ms = v;
         }
         let e = s.effect as usize;
+        if u.reset == Some(true) {
+            s.params[e] = effects::default_params(e);
+        }
         if let Some(c) = &u.colors {
             s.params[e].colors = c.clone();
         }
