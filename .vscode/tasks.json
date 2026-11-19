@@ -1,58 +1,61 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Compile Project",
-            "type": "process",
-            "isBuildCommand": true,
-            "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build"],
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated"
-            },
-            "problemMatcher": "$gcc",
-            "windows": {
-                "command": "${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja.exe"
-            }
-        },
-        {
-            "label": "Run Project",
-            "type": "process",
-            "command": "${env:HOME}/.pico-sdk/picotool/2.0.0/picotool/picotool",
-            "args": [
-                "load",
-                "${command:raspberry-pi-pico.launchTargetPath}",
-                "-fx"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated"
-            },
-            "problemMatcher": [],
-            "windows": {
-                "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.0.0/picotool/picotool.exe"
-            }
-        },
-        {
-            "label": "Flash",
-            "type": "process",
-            "command": "${userHome}/.pico-sdk/openocd/0.12.0+dev/openocd.exe",
-            "args": [
-                "-s",
-                "${userHome}/.pico-sdk/openocd/0.12.0+dev/scripts",
-                "-f",
-                "interface/cmsis-dap.cfg",
-                "-f",
-                "target/${command:raspberry-pi-pico.getTarget}.cfg",
-                "-c",
-                "adapter speed 5000; program \"${command:raspberry-pi-pico.launchTargetPath}\" verify reset exit"
-            ],
-            "problemMatcher": [],
-            "windows": {
-                "command": "${env:USERPROFILE}/.pico-sdk/openocd/0.12.0+dev/openocd.exe",
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flash (console build)",
+      "detail": "Build with USB serial logs and copy the UF2 to a Pico in BOOTSEL mode",
+      "type": "shell",
+      "command": "cargo xtask flash --console",
+      "problemMatcher": ["$rustc"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Flash (production build)",
+      "detail": "Build without USB console and copy the UF2 to a Pico in BOOTSEL mode",
+      "type": "shell",
+      "command": "cargo xtask flash",
+      "problemMatcher": ["$rustc"],
+      "group": "build"
+    },
+    {
+      "label": "Flash (diagnostic: no bootloader, console)",
+      "detail": "Firmware without bootloader/OTA, with USB serial logs",
+      "type": "shell",
+      "command": "cargo xtask flash --standalone --console",
+      "problemMatcher": ["$rustc"],
+      "group": "build"
+    },
+    {
+      "label": "Build release images (dist/)",
+      "type": "shell",
+      "command": "cargo xtask dist",
+      "problemMatcher": ["$rustc"],
+      "group": "build"
+    },
+    {
+      "label": "OTA update over Wi-Fi",
+      "detail": "Build and upload the firmware to a running device",
+      "type": "shell",
+      "command": "cargo xtask ota ${input:host} ${input:password}",
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Host tests",
+      "type": "shell",
+      "command": "cargo test -p host-tests",
+      "problemMatcher": ["$rustc"],
+      "group": "test"
+    },
+    {
+      "label": "UI mock server (http://localhost:8080)",
+      "type": "shell",
+      "command": "python tools/mock_server.py 8080",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    { "id": "host", "type": "promptString", "description": "Device address", "default": "pico-light-show-xxxxxx.local" },
+    { "id": "password", "type": "promptString", "description": "Admin password (empty if none)", "default": "", "password": true }
+  ]
 }

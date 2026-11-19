@@ -1,0 +1,6 @@
+# Host-side tooling only. The firmware and the bootloader are separate
+# embedded crates (see firmware/ and bootloader/) built by `cargo xtask`.
+[workspace]
+resolver = "3"
+members = ["xtask", "host-tests"]
+exclude = ["firmware", "bootloader"]

@@ -1,0 +1,8 @@
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+# Plain UF2 flashing of the application alone is NOT possible, because it lives
+# behind the bootloader. Use `cargo xtask dist` from the repository root, or a
+# debug probe: `probe-rs run --chip RP2040`.
+runner = "probe-rs run --chip RP2040"
+
+[build]
+target = "thumbv6m-none-eabi"

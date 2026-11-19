@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Pico Light Show</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo"></div>
+  <h1 id="title">Pico Light Show</h1>
+  <span id="wsdot" class="dot" title="Live connection"></span>
+  <button class="btn small" id="themeBtn" title="Toggle theme">◐</button>
+</header>
+
+<nav>
+  <button data-page="light" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>Light</button>
+  <button data-page="presets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Presets</button>
+  <button data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.9 2.9M16.9 16.9l2.9 2.9M1 12h4M19 12h4M4.2 19.8l2.9-2.9M16.9 7.1l2.9-2.9"/></svg>Settings</button>
+  <button data-page="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>System</button>
+</nav>
+
+<main>
+  <!-- ================= LIGHT ================= -->
+  <section class="page active" id="page-light">
+    <div class="banner info hidden" id="ddpBanner">Receiving a live DDP stream (e.g. OpenRGB) – effects are paused.</div>
+
+    <div class="card">
+      <div class="power">
+        <button class="power-btn" id="power" title="On / off">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+        </button>
+        <div class="grow">
+          <div class="slider-row" title="Brightness">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+            <input type="range" id="brightness" min="1" max="255"><output id="brightnessOut"></output>
+          </div>
+          <div class="slider-row" title="Speed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/></svg>
+            <input type="range" id="speed" min="1" max="255"><output id="speedOut"></output>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="lbl">Animate</span>
+        <div class="val"><label class="switch"><input type="checkbox" id="running"><span></span></label></div>
+      </div>
+      <div class="row">
+        <span class="lbl">Live preview</span>
+        <div class="val"><label class="switch"><input type="checkbox" id="previewOn"><span></span></label></div>
+      </div>
+      <canvas id="preview" class="hidden" height="26"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Effect</h2>
+      <div class="effects" id="effects"></div>
+    </div>
+
+    <div class="card" id="effectCard">
+      <h2 id="effectTitle">Effect settings</h2>
+      <div id="colorsBox">
+        <div class="colors" id="colors"></div>
+        <div class="palette" id="palette"></div>
+      </div>
+      <div id="opts"></div>
+    </div>
+
+    <div class="card">
+      <h2>On / off transition</h2>
+      <div class="row"><label for="transition">Style</label><div class="val"><select id="transition"></select></div></div>
+      <div class="row"><label for="transitionMs">Duration (ms)</label><div class="val"><input type="number" id="transitionMs" min="0" max="10000" step="100"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= PRESETS ================= -->
+  <section class="page" id="page-presets">
+    <div class="card">
+      <h2>Save current look</h2>
+      <div class="row"><input type="text" id="presetName" maxlength="24" placeholder="Preset name"><button class="btn primary" id="presetSave">Save</button></div>
+      <p class="muted">Stores the current effect with its colors, options, brightness and speed (max. 8 presets).</p>
+    </div>
+    <div class="card">
+      <h2>Presets</h2>
+      <div class="list" id="presetList"></div>
+    </div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="page" id="page-settings">
+    <div class="banner warn hidden" id="rebootBanner">Some changes take effect after a reboot. <button class="btn small" id="rebootNow">Reboot now</button></div>
+    <form id="cfgForm" autocomplete="off">
+      <div class="card">
+        <h2>Device</h2>
+        <div class="row"><label>Name</label><div class="val"><input type="text" name="name" maxlength="32" placeholder="automatic"></div></div>
+        <p class="muted" id="hostHint"></p>
+      </div>
+
+      <div class="card">
+        <h2>Wi-Fi</h2>
+        <div class="row"><label>Mode</label><div class="val"><select name="wifi_mode"><option value="client">Connect to network</option><option value="ap">Own access point</option></select></div></div>
+        <div data-show="client">
+          <div class="row"><label>Network (SSID)</label><div class="val"><div class="row" style="margin:0"><input type="text" name="wifi_ssid" maxlength="32"><button type="button" class="btn" id="scanBtn">Scan</button></div><div class="scan hidden" id="scanList"></div></div></div>
+          <div class="row"><label>Password</label><div class="val"><input type="password" name="wifi_pass" maxlength="64" placeholder="unchanged"></div></div>
+          <div class="row"><label>DHCP</label><div class="val"><label class="switch"><input type="checkbox" name="dhcp"><span></span></label></div></div>
+          <div data-show="static">
+            <div class="row"><label>IP address</label><div class="val ip" data-ip="ip"></div></div>
+            <div class="row"><label>Netmask</label><div class="val ip" data-ip="netmask"></div></div>
+            <div class="row"><label>Gateway</label><div class="val ip" data-ip="gateway"></div></div>
+            <div class="row"><label>DNS server</label><div class="val ip" data-ip="dns"></div></div>
+          </div>
+          <p class="muted">If the network is not reachable at boot, the device opens its own access point and keeps retrying in the background.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Access point</h2>
+        <div class="row"><label>SSID</label><div class="val"><input type="text" name="ap_ssid" maxlength="32" placeholder="automatic"></div></div>
+        <div class="row"><label>Password</label><div class="val"><input type="password" name="ap_pass" maxlength="64" placeholder="unchanged (min. 8 characters)"></div></div>
+        <p class="muted">Address in access point mode: http://192.168.4.1</p>
+      </div>
+
+      <div class="card">
+        <h2>LED strip</h2>
+        <div class="row"><label>Number of LEDs</label><div class="val"><input type="number" name="led_count" min="1" max="1000"></div></div>
+        <div class="row"><label>Data pin (GPIO)</label><div class="val"><select name="led_pin"></select></div></div>
+        <div class="row"><label>Color order</label><div class="val"><select name="color_order"><option>grb</option><option>rgb</option><option>brg</option><option>rbg</option><option>gbr</option><option>bgr</option></select></div></div>
+        <div class="row"><label>Power limit (mA, 0 = off)</label><div class="val"><input type="number" name="max_current_ma" min="0" max="60000" step="100"></div></div>
+        <div class="row"><label>Gamma correction</label><div class="val"><label class="switch"><input type="checkbox" name="gamma"><span></span></label></div></div>
+        <div class="row"><label>After power-up</label><div class="val"><select name="boot_power"><option value="off">Stay off</option><option value="on">Turn on</option><option value="restore">Restore last state</option></select></div></div>
+      </div>
+
+      <div class="card">
+        <h2>MQTT / Home Assistant</h2>
+        <div class="row"><label>Enabled</label><div class="val"><label class="switch"><input type="checkbox" name="mqtt_enabled"><span></span></label></div></div>
+        <div data-show="mqtt">
+          <div class="row"><label>Broker host / IP</label><div class="val"><input type="text" name="mqtt_host" maxlength="64"></div></div>
+          <div class="row"><label>Port</label><div class="val"><input type="number" name="mqtt_port" min="1" max="65535"></div></div>
+          <div class="row"><label>User</label><div class="val"><input type="text" name="mqtt_user" maxlength="32"></div></div>
+          <div class="row"><label>Password</label><div class="val"><input type="password" name="mqtt_pass" maxlength="64" placeholder="unchanged"></div></div>
+          <div class="row"><label>Discovery prefix</label><div class="val"><input type="text" name="mqtt_discovery_prefix" maxlength="32"></div></div>
+          <div class="row"><label>Base topic</label><div class="val"><input type="text" name="mqtt_topic" maxlength="48" placeholder="picolightshow/&lt;mac&gt;"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>DDP (OpenRGB, xLights)</h2>
+        <div class="row"><label>Enabled (UDP 4048)</label><div class="val"><label class="switch"><input type="checkbox" name="ddp_enabled"><span></span></label></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Security</h2>
+        <div class="row"><label>Admin password</label><div class="val"><input type="password" name="admin_pass" maxlength="32" placeholder="unchanged"></div></div>
+        <div class="row"><label>Remove password</label><div class="val"><label class="switch"><input type="checkbox" id="clearAdmin"><span></span></label></div></div>
+        <p class="muted">Protects settings, firmware update and reboot (user name: admin). Light control stays open for Home Assistant and everyone on the network.</p>
+      </div>
+
+      <div class="btns"><button class="btn primary" type="submit">Save settings</button></div>
+    </form>
+  </section>
+
+  <!-- ================= SYSTEM ================= -->
+  <section class="page" id="page-system">
+    <div class="banner warn hidden" id="panicBanner"></div>
+    <div class="card">
+      <h2>Status</h2>
+      <div class="kv" id="info"></div>
+    </div>
+    <div class="card">
+      <h2>Firmware update</h2>
+      <p class="muted">Select the <b>*-ota.bin</b> file. The device reboots into the new firmware and automatically returns to the previous one if the new version does not start correctly.</p>
+      <div class="row"><input type="file" id="otaFile" accept=".bin"><button class="btn primary" id="otaBtn">Upload</button></div>
+      <progress id="otaProgress" class="hidden" max="100" value="0"></progress>
+      <p id="otaMsg" class="muted"></p>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <div class="btns">
+        <button class="btn" id="backupBtn">Download backup</button>
+        <label class="btn">Restore…<input type="file" id="restoreFile" accept=".json" class="hidden"></label>
+      </div>
+      <p class="muted">Contains the settings (without passwords) and the presets.</p>
+    </div>
+    <div class="card">
+      <h2>Maintenance</h2>
+      <div class="btns">
+        <button class="btn" id="rebootBtn">Reboot</button>
+        <button class="btn danger" id="resetBtn">Factory reset</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

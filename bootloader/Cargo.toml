@@ -1,0 +1,27 @@
+[package]
+name = "pico-light-show-bootloader"
+version = "1.0.0"
+edition = "2024"
+description = "embassy-boot based bootloader with A/B update and rollback for Pico Light Show"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "pico-light-show-bootloader"
+test = false
+bench = false
+
+[dependencies]
+embassy-rp = { version = "0.10.0", features = ["rp2040", "unstable-pac"] }
+embassy-boot-rp = { version = "0.10.0" }
+embassy-sync = { version = "0.8.0" }
+embassy-time = { version = "0.5.1" }
+cortex-m = { version = "0.7.7", features = ["inline-asm", "critical-section-single-core"] }
+cortex-m-rt = "0.7.5"
+embedded-storage = "0.3.1"
+
+[profile.release]
+debug = 2
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
