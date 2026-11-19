@@ -10,6 +10,7 @@ mod color;
 mod config;
 mod ddp;
 mod effects;
+mod fetch;
 mod led;
 mod mqtt;
 mod net;
@@ -17,6 +18,7 @@ mod state;
 mod storage;
 mod system;
 mod transitions;
+mod update;
 mod web;
 
 use cyw43::aligned_bytes;
@@ -57,8 +59,8 @@ static RENDERER: ConstStaticCell<Renderer> = ConstStaticCell::new(Renderer::new(
 static FLASH: StaticCell<FlashMutex> = StaticCell::new();
 
 /// Number of sockets: DHCP client, DNS client, HTTP workers, MQTT, DDP,
-/// DHCP server, captive DNS, mDNS.
-const SOCKETS: usize = web::WORKERS + 8;
+/// DHCP server, captive DNS, mDNS, update download.
+const SOCKETS: usize = web::WORKERS + 9;
 
 fn random_u32() -> u32 {
     let mut v = 0u32;
@@ -365,6 +367,7 @@ async fn main_task(spawner: Spawner, p: embassy_rp::Peripherals) {
     spawner.spawn(storage::saver_task().unwrap());
     spawner.spawn(system::confirm_boot_task(flash).unwrap());
     spawner.spawn(net::mdns_task(stack).unwrap());
+    spawner.spawn(update::update_task(stack, flash).unwrap());
     if cfg.ddp_enabled {
         spawner.spawn(ddp::ddp_task(stack).unwrap());
     }

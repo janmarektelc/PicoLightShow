@@ -9,7 +9,8 @@ of [Embassy](https://embassy.dev).
 - **8 on/off transitions** and a smooth cross-fade when switching effects
 - **MQTT** with Home Assistant auto-discovery (light entity with effects, plus a speed slider)
 - **DDP** (UDP 4048) for OpenRGB, xLights and other real-time senders
-- **OTA firmware update** from the browser, with automatic rollback if the new firmware does not start
+- **Online updates**: the device checks GitHub for new firmware daily; install with one click in the web UI
+  or from Home Assistant (*Settings → Updates*), with automatic rollback if the new firmware does not start
 - Wi-Fi client or access point. If the client connection fails, the device falls back to its own access point
   and keeps retrying in the background. Includes a captive portal and `http://<name>.local` (mDNS).
 - Gamma correction, configurable color order and data pin, power (current) limiter
@@ -18,10 +19,11 @@ of [Embassy](https://embassy.dev).
 
 ## Download
 
-Ready-made images are in [`releases/`](releases/). Latest version **1.0.0**:
+Ready-made images are in [`releases/<version>/`](releases/); the newest version is named in
+[`releases/latest.json`](releases/latest.json).
 
-- [`pico-light-show-1.0.0.uf2`](releases/1.0.0/pico-light-show-1.0.0.uf2) - bootloader and firmware, for installing over USB
-- [`pico-light-show-1.0.0-ota.bin`](releases/1.0.0/pico-light-show-1.0.0-ota.bin) - firmware only, for updates from the web UI
+- `pico-light-show-<version>.uf2` - bootloader and firmware, for installing over USB
+- `pico-light-show-<version>-ota.bin` - firmware only, for updates over Wi-Fi
 
 ## Hardware
 
@@ -54,12 +56,39 @@ Ready-made images are in [`releases/`](releases/). Latest version **1.0.0**:
 
 ### Updating
 
-- **Over Wi-Fi:** System → Firmware update → choose `*-ota.bin`. The device writes the image into the
-  second flash slot, reboots, and confirms the new firmware once Wi-Fi and the web server are up.
-  If the new firmware crashes or hangs before that, the watchdog resets the device and the bootloader
-  restores the previous version.
+- **Online:** after start-up and then once a day the device reads [`releases/latest.json`](releases/latest.json)
+  from GitHub. A new version is shown on the System page (with a dot on the *System* tab) and in Home
+  Assistant under *Settings → Updates*. **Install update** (web) or **Install** (Home Assistant) downloads
+  the image over HTTPS straight into the second flash slot, checks its size and SHA-256 and reboots.
+  Nothing is installed automatically. The daily check and the update source can be changed under
+  Settings → Firmware updates (e.g. a manifest on your own server, `http://` works too).
+- **Manual upload:** System → Firmware update → Manual upload → choose `*-ota.bin`.
 - From the command line: `cargo xtask ota pico-light-show-xxxxxx.local [admin-password]`.
 - Over USB: copy the `.uf2` again. Settings are kept.
+
+In all cases the new firmware is confirmed once Wi-Fi and the web server are up. If it crashes or hangs
+before that, the watchdog resets the device and the bootloader restores the previous version.
+
+The download is not authenticated beyond the checksum in the manifest (the TLS certificate is not
+verified), so it only protects against broken downloads, not against a manipulated network.
+
+### Publishing a release
+
+1. Raise `version` in `firmware/Cargo.toml`.
+2. `cargo xtask release "Short release notes (shown in the web UI and Home Assistant)"` builds the
+   production images, copies them to `releases/<version>/` and rewrites `releases/latest.json`:
+
+   ```json
+   {
+     "version": "1.1.0",
+     "ota": "1.1.0/pico-light-show-1.1.0-ota.bin",
+     "size": 851968,
+     "sha256": "…",
+     "notes": "Short release notes"
+   }
+   ```
+
+3. Commit and push. Devices see the new version within a day, or immediately after *Check now*.
 
 ## Building
 
@@ -114,7 +143,8 @@ a client, **off right after power-up** = the firmware did not reach the Wi-Fi st
 ## Home Assistant (MQTT)
 
 Enable MQTT in Settings and enter the broker address (IP or host name). The device appears automatically
-as a light with brightness, RGB color and an effect list, plus a *Speed* number entity.
+as a light with brightness, RGB color and an effect list, a *Speed* number entity and a *Firmware* update
+entity (Settings → Updates in Home Assistant, with Install button and progress).
 
 | Topic | Meaning |
 |---|---|
@@ -122,6 +152,8 @@ as a light with brightness, RGB color and an effect list, plus a *Speed* number 
 | `picolightshow/<mac>/set` | commands, e.g. `{"state":"ON","brightness":120,"effect":"Fire","color":{"r":255,"g":0,"b":0}}` |
 | `picolightshow/<mac>/speed/set` | speed 1–255 |
 | `picolightshow/<mac>/status` | `online` / `offline` (last will) |
+| `picolightshow/<mac>/update` | firmware update state for the HA `update` entity (retained) |
+| `picolightshow/<mac>/update/install` | `install` starts the online update |
 
 Setting a color changes the first color of the current effect. Effects without colors (Rainbow, Fire, …)
 switch to *Solid color*.
@@ -144,6 +176,7 @@ power limit apply to DDP too.
 | GET/POST 🔒 | `/api/config` | settings (passwords are never returned; missing fields stay unchanged) |
 | GET 🔒 | `/api/wifi/scan` | nearby networks |
 | POST 🔒 | `/api/reboot`, `/api/factory-reset`, `/api/ota` | |
+| GET / POST 🔒 | `/api/update` | online update status; POST `{"action":"check"}` or `{"action":"install"}` |
 | WS | `/ws` | pushes state JSON on every change; accepts the same JSON as POST `/api/state`; `preview:on` starts binary preview frames |
 
 🔒 = protected by the admin password (HTTP basic auth) when one is set.
@@ -161,7 +194,8 @@ core 0 (Embassy executor)                     core 1 (Embassy executor)
 ├─ DHCP server + captive DNS (AP mode)           └─ WS2812 via PIO1 + DMA
 ├─ mDNS responder
 ├─ settings saver (flash, debounced)          shared state: one mutex-protected
-├─ OTA writer / boot confirmation             struct + version counter
+├─ OTA writer / online updates (HTTPS)        struct + version counter
+├─ boot confirmation
 └─ watchdog (fed only while core 1 renders)
 ```
 

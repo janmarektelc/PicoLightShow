@@ -28,7 +28,7 @@ use crate::effects::{EFFECTS, EffectInfo};
 use crate::state::{self, StateUpdate};
 use crate::storage::{self, FlashMutex};
 use crate::transitions::TRANSITIONS;
-use crate::{led, mqtt, net, system};
+use crate::{led, mqtt, net, system, update};
 
 pub const WORKERS: usize = 5;
 
@@ -330,6 +330,18 @@ fn make_app() -> Router<impl PathRouter> {
             }),
         )
         .route("/api/ota", post_service(OtaService))
+        .route(
+            "/api/update",
+            get(async || JsonOut::ok(update::status_json).await)
+                .post(async |_a: Auth, Json(req): Json<UpdateRequest>| {
+                    match req.action.as_str() {
+                        "check" => update::request_check(),
+                        "install" => update::request_install(),
+                        _ => return JsonOut::error(StatusCode::BAD_REQUEST, "unknown action").await,
+                    }
+                    JsonOut::ok(update::status_json).await
+                }),
+        )
         .route("/ws", get(async |upgrade: WebSocketUpgrade| upgrade.on_upgrade(WsSession)))
         .route("/favicon.ico", get_service(File::with_content_type("image/x-icon", &[])))
 }
@@ -529,6 +541,9 @@ struct ConfigView {
     mqtt_topic: String<48>,
     ddp_enabled: bool,
     admin_pass_set: bool,
+    update_check: bool,
+    update_url: String<160>,
+    default_update_url: &'static str,
 }
 
 impl From<DeviceConfig> for ConfigView {
@@ -562,8 +577,16 @@ impl From<DeviceConfig> for ConfigView {
                 mqtt_discovery_prefix: c.mqtt_discovery_prefix,
                 mqtt_topic: c.mqtt_topic,
                 ddp_enabled: c.ddp_enabled,
+                update_check: c.update_check,
+                update_url: c.update_url,
+                default_update_url: crate::update::DEFAULT_URL,
         }
     }
+}
+
+#[derive(Deserialize)]
+struct UpdateRequest {
+    action: String<16>,
 }
 
 /// Partial configuration update; missing fields keep their value.
@@ -597,6 +620,8 @@ struct ConfigUpdate {
     mqtt_topic: Option<String<48>>,
     ddp_enabled: Option<bool>,
     admin_pass: Option<String<32>>,
+    update_check: Option<bool>,
+    update_url: Option<String<160>>,
 }
 
 impl ConfigUpdate {
@@ -607,7 +632,7 @@ impl ConfigUpdate {
         set!(
             name, wifi_mode, wifi_ssid, wifi_pass, dhcp, ip, netmask, gateway, dns, ap_ssid, ap_pass, led_count,
             led_pin, color_order, max_current_ma, gamma, boot_power, mqtt_enabled, mqtt_host, mqtt_port, mqtt_user,
-            mqtt_pass, mqtt_discovery_prefix, mqtt_topic, ddp_enabled, admin_pass
+            mqtt_pass, mqtt_discovery_prefix, mqtt_topic, ddp_enabled, admin_pass, update_check, update_url
         );
     }
 }
@@ -756,8 +781,6 @@ impl RequestHandlerService<()> for BodyService {
 
 struct OtaService;
 
-const APP_START: u32 = 0x1000_7000;
-const APP_END: u32 = 0x1010_1000;
 
 fn ota_error(msg: &'static str) -> (StatusCode, &'static str) {
     (StatusCode::BAD_REQUEST, msg)
@@ -806,6 +829,7 @@ async fn ota_receive<R: Read>(request: &mut Request<'_, R>, len: usize) -> Resul
         return Err("file too large for the update partition");
     }
     net::touch_http();
+    let _lock = system::OTA_LOCK.try_lock().map_err(|_| "another firmware update is in progress")?;
     let mut state_buf = system::StateBuf::new();
     let mut updater = system::Updater::new(system::updater_config(flash), &mut state_buf.0);
     // The server's read_request timeout (5 s) covers the whole request; a
@@ -827,9 +851,7 @@ async fn ota_receive<R: Read>(request: &mut Request<'_, R>, len: usize) -> Resul
                 if &chunk.0[..4] == b"UF2\n" {
                     return Err("this is a UF2 file - upload the *-ota.bin file instead");
                 }
-                let sp = u32::from_le_bytes([chunk.0[0], chunk.0[1], chunk.0[2], chunk.0[3]]);
-                let reset = u32::from_le_bytes([chunk.0[4], chunk.0[5], chunk.0[6], chunk.0[7]]);
-                if !(0x2000_0000..=0x2004_2000).contains(&sp) || !(APP_START..APP_END).contains(&(reset & !1)) {
+                if !system::looks_like_app_image(&chunk.0[..fill]) {
                     return Err("not a Pico Light Show application image");
                 }
             }

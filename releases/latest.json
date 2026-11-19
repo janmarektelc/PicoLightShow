@@ -1,0 +1,7 @@
+{
+  "version": "1.1.0",
+  "ota": "1.1.0/pico-light-show-1.1.0-ota.bin",
+  "size": 825280,
+  "sha256": "21645892c70722123a7b9b7544d156630ece7032c4f87ea76b56b1bf3bd6ae7d",
+  "notes": "Online firmware updates: daily check on GitHub, one-click install from the web UI and from Home Assistant (Settings - Updates)."
+}

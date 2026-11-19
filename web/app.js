@@ -49,7 +49,7 @@ function showPage(p) {
   $$('nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
   $$('.page').forEach(s => s.classList.toggle('active', s.id === 'page-' + p));
   if (p === 'settings') loadConfig();
-  if (p === 'system') loadInfo();
+  if (p === 'system') { loadInfo(); loadUpdate(); }
   if (p === 'presets') loadPresets();
   if (location.hash.slice(1) !== p) history.replaceState(null, '', '#' + p);
 }
@@ -391,6 +391,56 @@ async function loadInfo() {
   } catch (e) { toast(e.message, true); }
 }
 setInterval(() => { if ($('#page-system').classList.contains('active')) loadInfo(); }, 5000);
+setInterval(loadUpdate, 10 * 60 * 1000);
+
+// ---------------------------------------------------------------- online update
+let updTimer = null;
+function agoText(s) {
+  if (s == null) return '';
+  if (s < 90) return 'just now';
+  if (s < 5400) return Math.round(s / 60) + ' min ago';
+  if (s < 129600) return Math.round(s / 3600) + ' h ago';
+  return Math.round(s / 86400) + ' days ago';
+}
+function renderUpdate(u) {
+  $('#updInstalled').textContent = u.installed;
+  $('#updLatest').textContent = u.latest || '–';
+  const busy = u.phase === 'checking' || u.phase === 'downloading' || u.phase === 'installing';
+  const texts = {
+    idle: 'Not checked yet.',
+    checking: 'Checking for updates…',
+    up_to_date: 'The firmware is up to date' + (u.checked_ago_s != null ? ` (checked ${agoText(u.checked_ago_s)}).` : '.'),
+    available: `Version ${u.latest} is available.`,
+    downloading: `Downloading and writing the update… ${u.progress} %`,
+    installing: 'Update stored – the device restarts into the new firmware. This page reloads in 25 s.',
+    error: 'Update check failed: ' + u.error,
+  };
+  $('#updState').textContent = texts[u.phase] || u.phase;
+  $('#updState').classList.toggle('err', u.phase === 'error');
+  $('#updInstall').classList.toggle('hidden', u.phase !== 'available');
+  $('#updCheck').disabled = busy;
+  $('#updNotes').textContent = u.notes || '';
+  $('#updNotes').classList.toggle('hidden', !(u.notes && (u.phase === 'available' || u.phase === 'downloading')));
+  $('#updProgress').classList.toggle('hidden', u.phase !== 'downloading' && u.phase !== 'installing');
+  $('#updProgress').value = u.phase === 'installing' ? 100 : u.progress;
+  $('nav [data-page=system]').classList.toggle('badge', u.phase === 'available');
+  clearTimeout(updTimer);
+  if (u.phase === 'installing') {
+    if (!window.updReloading) { window.updReloading = true; setTimeout(() => location.reload(), 25000); }
+  } else if (busy) updTimer = setTimeout(loadUpdate, 1000);
+}
+async function loadUpdate() {
+  try { renderUpdate(await api('/api/update')); } catch {}
+}
+async function updateAction(action) {
+  try { renderUpdate(await api('/api/update', { body: { action } })); }
+  catch (e) { return toast(e.message, true); }
+  setTimeout(loadUpdate, 500);
+}
+$('#updCheck').onclick = () => updateAction('check');
+$('#updInstall').onclick = () => {
+  if (confirm(`Install firmware ${$('#updLatest').textContent}? The light switches off for about half a minute while the device restarts.`)) updateAction('install');
+};
 
 $('#otaBtn').onclick = () => {
   const file = $('#otaFile').files[0];
@@ -448,6 +498,7 @@ $('#resetBtn').onclick = async () => {
   renderEffects();
   try { applyState(await api('/api/state')); } catch {}
   loadInfo();
+  loadUpdate();
   connectWs();
   const p = location.hash.slice(1);
   if (['presets', 'settings', 'system'].includes(p)) showPage(p);

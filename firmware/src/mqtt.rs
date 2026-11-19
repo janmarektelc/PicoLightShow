@@ -11,7 +11,7 @@ use core::fmt::Write as _;
 use core::net::Ipv4Addr;
 use core::str::FromStr;
 
-use embassy_futures::select::{Either3, select3};
+use embassy_futures::select::{Either4, select4};
 use embassy_net::dns::DnsQueryType;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{IpAddress, Stack};
@@ -24,7 +24,7 @@ use serde::Deserialize;
 use crate::config::DeviceConfig;
 use crate::effects::{EFFECT_COUNT, EFFECTS};
 use crate::state;
-use crate::{net, system};
+use crate::{net, system, update};
 
 const KEEPALIVE_S: u16 = 60;
 const PING_EVERY: Duration = Duration::from_secs(30);
@@ -235,7 +235,27 @@ async fn send_discovery(conn: &mut Conn<'_>, cfg: &DeviceConfig, t: &Topics) -> 
     );
     ctopic.clear();
     let _ = write!(ctopic, "{}/number/{}_speed/config", cfg.mqtt_discovery_prefix, t.node);
+    conn.publish(&ctopic, payload.as_bytes(), true).await?;
+
+    // firmware update entity (Settings -> Updates in Home Assistant)
+    payload.clear();
+    let _ = write!(
+        payload,
+        "{{\"name\":\"Firmware\",\"uniq_id\":\"{node}_firmware\",\"dev_cla\":\"firmware\",\"ent_cat\":\"config\",\"stat_t\":\"{base}/update\",\"cmd_t\":\"{base}/update/install\",\"pl_inst\":\"install\",\"avty_t\":\"{base}/status\",\"dev\":{{\"ids\":[\"{node}\"]}}}}",
+        node = t.node,
+        base = t.base
+    );
+    ctopic.clear();
+    let _ = write!(ctopic, "{}/update/{}/config", cfg.mqtt_discovery_prefix, t.node);
     conn.publish(&ctopic, payload.as_bytes(), true).await
+}
+
+async fn publish_update_state(conn: &mut Conn<'_>, topic: &str) -> Result<(), Error> {
+    let mut buf = [0u8; 512];
+    match update::ha_state_json(&mut buf) {
+        Some(n) => conn.publish(topic, &buf[..n], true).await,
+        None => Ok(()),
+    }
 }
 
 #[derive(Deserialize)]
@@ -364,15 +384,21 @@ async fn session(stack: Stack<'static>, cfg: &DeviceConfig, t: &Topics) -> Resul
     let set_topic = topic(t, "set");
     let speed_topic = topic(t, "speed/set");
     let state_topic = topic(t, "state");
+    let install_topic = topic(t, "update/install");
+    let update_topic = topic(t, "update");
     conn.subscribe(1, &set_topic).await?;
     conn.subscribe(2, &speed_topic).await?;
+    conn.subscribe(3, &install_topic).await?;
     conn.publish(&status_topic, b"online", true).await?;
     send_discovery(&mut conn, cfg, t).await?;
     let mut payload: String<384> = String::new();
     state_payload(&mut payload);
     conn.publish(&state_topic, payload.as_bytes(), true).await?;
+    publish_update_state(&mut conn, &update_topic).await?;
 
     let mut watch = state::CHANGED.receiver();
+    let mut update_watch = update::CHANGED.receiver();
+    let mut update_dirty = false;
     let mut last_ping = Instant::now();
     let mut dirty = false;
 
@@ -394,6 +420,11 @@ async fn session(stack: Stack<'static>, cfg: &DeviceConfig, t: &Topics) -> Resul
                             let msg = &data[pos..];
                             if topic_bytes == set_topic.as_bytes() {
                                 handle_command(msg);
+                            } else if topic_bytes == install_topic.as_bytes() {
+                                if msg == b"install" {
+                                    log::info!("mqtt: firmware update requested");
+                                    update::request_install();
+                                }
                             } else if topic_bytes == speed_topic.as_bytes() {
                                 if let Some(v) = core::str::from_utf8(msg).ok().and_then(|s| s.trim().parse::<f32>().ok()) {
                                     let v = (v as i32).clamp(1, 255) as u8;
@@ -421,12 +452,25 @@ async fn session(stack: Stack<'static>, cfg: &DeviceConfig, t: &Topics) -> Resul
                 None => core::future::pending::<()>().await,
             }
         };
+        let update_changed = async {
+            match update_watch.as_mut() {
+                Some(w) => {
+                    w.changed().await;
+                }
+                None => core::future::pending::<()>().await,
+            }
+        };
         let ping_in = PING_EVERY.checked_sub(last_ping.elapsed()).unwrap_or(Duration::from_ticks(0));
-        let wait = if dirty { Duration::from_millis(150) } else { ping_in };
-        match select3(conn.fill(), changed, Timer::after(wait)).await {
-            Either3::First(r) => r?,
-            Either3::Second(()) => dirty = true,
-            Either3::Third(()) => {
+        let wait = if dirty || update_dirty { Duration::from_millis(150) } else { ping_in };
+        match select4(conn.fill(), changed, Timer::after(wait), update_changed).await {
+            Either4::First(r) => r?,
+            Either4::Second(()) => dirty = true,
+            Either4::Fourth(()) => update_dirty = true,
+            Either4::Third(()) => {
+                if update_dirty {
+                    update_dirty = false;
+                    publish_update_state(&mut conn, &update_topic).await?;
+                }
                 if dirty {
                     dirty = false;
                     state_payload(&mut payload);

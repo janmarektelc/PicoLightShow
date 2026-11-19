@@ -152,6 +152,13 @@
       </div>
 
       <div class="card">
+        <h2>Firmware updates</h2>
+        <div class="row"><label>Check daily for updates</label><div class="val"><label class="switch"><input type="checkbox" name="update_check"><span></span></label></div></div>
+        <div class="row"><label>Update source</label><div class="val"><input type="url" name="update_url" maxlength="160" placeholder="official releases"></div></div>
+        <p class="muted">New versions are only announced (here and in Home Assistant); nothing is installed without a click. Leave the source empty for the official releases on GitHub.</p>
+      </div>
+
+      <div class="card">
         <h2>Security</h2>
         <div class="row"><label>Admin password</label><div class="val"><input type="password" name="admin_pass" maxlength="32" placeholder="unchanged"></div></div>
         <div class="row"><label>Remove password</label><div class="val"><label class="switch"><input type="checkbox" id="clearAdmin"><span></span></label></div></div>
@@ -171,10 +178,25 @@
     </div>
     <div class="card">
       <h2>Firmware update</h2>
-      <p class="muted">Select the <b>*-ota.bin</b> file. The device reboots into the new firmware and automatically returns to the previous one if the new version does not start correctly.</p>
-      <div class="row"><input type="file" id="otaFile" accept=".bin"><button class="btn primary" id="otaBtn">Upload</button></div>
-      <progress id="otaProgress" class="hidden" max="100" value="0"></progress>
-      <p id="otaMsg" class="muted"></p>
+      <div class="update" id="updateBox">
+        <div class="update-head">
+          <div><div class="muted small">Installed</div><b id="updInstalled">–</b></div>
+          <div><div class="muted small">Latest</div><b id="updLatest">–</b></div>
+          <div class="grow"></div>
+          <button class="btn" id="updCheck">Check now</button>
+          <button class="btn primary hidden" id="updInstall">Install update</button>
+        </div>
+        <p id="updState" class="muted"></p>
+        <p id="updNotes" class="update-notes hidden"></p>
+        <progress id="updProgress" class="hidden" max="100" value="0"></progress>
+      </div>
+      <details class="manual">
+        <summary>Manual upload</summary>
+        <p class="muted">Select the <b>*-ota.bin</b> file. The device reboots into the new firmware and automatically returns to the previous one if the new version does not start correctly.</p>
+        <div class="row"><input type="file" id="otaFile" accept=".bin"><button class="btn primary" id="otaBtn">Upload</button></div>
+        <progress id="otaProgress" class="hidden" max="100" value="0"></progress>
+        <p id="otaMsg" class="muted"></p>
+      </details>
     </div>
     <div class="card">
       <h2>Backup</h2>

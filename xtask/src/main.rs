@@ -3,6 +3,9 @@
 //!   cargo xtask dist    build bootloader + firmware, write dist/*.uf2 and dist/*-ota.bin
 //!   cargo xtask flash   `dist` and copy the UF2 to a Pico in BOOTSEL mode (RPI-RP2 drive)
 //!   cargo xtask ota <host> [password]   `dist` and upload the OTA image over Wi-Fi
+//!   cargo xtask release ["release notes"]   production `dist`, copy the images to
+//!                       releases/<version>/ and write releases/latest.json, the
+//!                       manifest the devices check for online updates
 //!
 //! Add `--console` to any command for a build with log output on the USB serial
 //! port (files get a `-console` suffix). Without it the build is for production.
@@ -276,6 +279,53 @@ fn upload_ota(host: &str, password: Option<&str>, image: &Path) -> Result<()> {
     if first.contains(" 200 ") { Ok(()) } else { Err(format!("device answered: {first}")) }
 }
 
+fn json_escape(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\t' => out.push_str("\\t"),
+            c if (c as u32) < 0x20 => {}
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// Copy a production build into releases/<version>/ and update releases/latest.json.
+fn release(notes: &str) -> Result<()> {
+    use sha2::{Digest, Sha256};
+    if notes.len() > 230 {
+        return Err("release notes too long (max. 230 characters, they are shown in Home Assistant)".into());
+    }
+    let d = dist(false, false)?;
+    let root = root();
+    let version = package_version(&root.join("firmware"));
+    let rel_dir = root.join("releases");
+    let ver_dir = rel_dir.join(&version);
+    fs::create_dir_all(&ver_dir).map_err(|e| e.to_string())?;
+    let uf2_name = d.uf2.file_name().unwrap().to_string_lossy().to_string();
+    let ota_name = d.ota.file_name().unwrap().to_string_lossy().to_string();
+    fs::copy(&d.uf2, ver_dir.join(&uf2_name)).map_err(|e| e.to_string())?;
+    fs::copy(&d.ota, ver_dir.join(&ota_name)).map_err(|e| e.to_string())?;
+    let ota = fs::read(&d.ota).map_err(|e| e.to_string())?;
+    let sha: String = Sha256::digest(&ota).iter().map(|b| format!("{b:02x}")).collect();
+    let manifest = format!(
+        "{{\n  \"version\": \"{version}\",\n  \"ota\": \"{version}/{ota_name}\",\n  \"size\": {},\n  \"sha256\": \"{sha}\",\n  \"notes\": \"{}\"\n}}\n",
+        ota.len(),
+        json_escape(notes)
+    );
+    fs::write(rel_dir.join("latest.json"), &manifest).map_err(|e| e.to_string())?;
+    println!();
+    println!("release       : {}", ver_dir.display());
+    println!("manifest      : {}", rel_dir.join("latest.json").display());
+    println!("{manifest}");
+    println!("Commit and push releases/ - devices pick the update up within a day or on \"Check now\".");
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let all: Vec<String> = env::args().skip(1).collect();
     let console = all.iter().any(|a| a == "--console");
@@ -301,8 +351,14 @@ fn run() -> Result<()> {
             let d = dist(console, false)?;
             upload_ota(host, args.get(2).map(String::as_str), &d.ota)
         }
+        Some("release") => {
+            if console || standalone {
+                return Err("releases are always production builds (no --console / --standalone)".into());
+            }
+            release(args.get(1).map(String::as_str).unwrap_or(""))
+        }
         _ => {
-            eprintln!("usage: cargo xtask <dist | flash | ota <host> [password]> [--console] [--standalone]");
+            eprintln!("usage: cargo xtask <dist | flash | ota <host> [password] | release [\"notes\"]> [--console] [--standalone]");
             exit(2);
         }
     }

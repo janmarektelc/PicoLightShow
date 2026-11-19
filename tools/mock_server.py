@@ -33,6 +33,22 @@ config = {
 }
 
 
+upd = {"phase": "idle", "since": 0.0}
+
+
+def update_view():
+    t = time.time() - upd["since"]
+    if upd["phase"] == "checking" and t > 1.5:
+        upd["phase"] = "available"
+    if upd["phase"] == "downloading" and t > 6:
+        upd["phase"] = "installing"
+    known = upd["phase"] not in ("idle", "checking")
+    return {"phase": upd["phase"], "installed": "1.0.0", "latest": "1.1.0" if known else "",
+            "notes": "Online updates from GitHub and Home Assistant.\nNew effects." if known else "",
+            "progress": min(100, int(t / 6 * 100)) if upd["phase"] == "downloading" else 0,
+            "error": "", "checked_ago_s": 42 if known else None}
+
+
 def effect_params(i):
     if i not in params:
         e = META["effects"][i]
@@ -103,6 +119,8 @@ class Handler(SimpleHTTPRequestHandler):
                               "render_load": 84, "current_ma": 412, "ws_clients": 1})
         if p == "/api/config":
             return self.json(config)
+        if p == "/api/update":
+            return self.json(update_view())
         if p == "/api/presets":
             return self.json(presets)
         if p == "/api/wifi/scan":
@@ -150,6 +168,10 @@ class Handler(SimpleHTTPRequestHandler):
                 elif k in config:
                     config[k] = v
             return self.json({"ok": True, "reboot_required": True})
+        if p == "/api/update":
+            upd["phase"] = "checking" if data.get("action") == "check" else "downloading"
+            upd["since"] = time.time()
+            return self.json(update_view())
         if p in ("/api/reboot", "/api/factory-reset"):
             return self.json({"ok": True})
         if p == "/api/ota":

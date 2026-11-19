@@ -386,3 +386,24 @@ pub async fn sensor_task(
         Timer::after_secs(5).await;
     }
 }
+
+/// Held while a firmware image is written into the DFU slot (web upload or online update).
+pub static OTA_LOCK: embassy_sync::mutex::Mutex<CriticalSectionRawMutex, ()> = embassy_sync::mutex::Mutex::new(());
+
+/// Plausibility check of the first bytes of an application image: initial stack
+/// pointer in RAM and reset vector inside the application flash region.
+pub fn looks_like_app_image(head: &[u8]) -> bool {
+    if head.len() < 8 || &head[..4] == b"UF2\n" {
+        return false;
+    }
+    let (start, end) = {
+        unsafe extern "C" {
+            static __app_start: u32;
+            static __app_end: u32;
+        }
+        (&raw const __app_start as u32, &raw const __app_end as u32)
+    };
+    let sp = u32::from_le_bytes([head[0], head[1], head[2], head[3]]);
+    let reset = u32::from_le_bytes([head[4], head[5], head[6], head[7]]) & !1;
+    (0x2000_0000..=0x2004_2000).contains(&sp) && (start..end).contains(&reset)
+}

@@ -86,6 +86,11 @@ pub struct DeviceConfig {
 
     /// Password protecting settings, OTA and reboot (HTTP basic auth, user `admin`). Empty = no auth.
     pub admin_pass: String<32>,
+
+    /// Look for new firmware once a day.
+    pub update_check: bool,
+    /// URL of the update manifest (`latest.json`); empty = the official releases.
+    pub update_url: String<160>,
 }
 
 fn s<const N: usize>(v: &str) -> String<N> {
@@ -123,6 +128,8 @@ impl Default for DeviceConfig {
             mqtt_topic: String::new(),
             ddp_enabled: true,
             admin_pass: String::new(),
+            update_check: true,
+            update_url: String::new(),
         }
     }
 }
@@ -177,6 +184,12 @@ impl DeviceConfig {
     /// Name shown in the UI and in Home Assistant.
     pub fn display_name(&self) -> String<32> {
         if self.name.is_empty() { self.hostname() } else { self.name.clone() }
+    }
+
+    /// URL of the update manifest.
+    pub fn update_url_effective(&self) -> String<160> {
+        let url = self.update_url.trim();
+        if url.is_empty() { s(crate::update::DEFAULT_URL) } else { String::try_from(url).unwrap_or_default() }
     }
 
     /// SSID of the access point (automatic `PicoLightShow-A1B2C3` when empty).
