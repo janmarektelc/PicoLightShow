@@ -112,6 +112,19 @@ fn write_uf2(image: &BTreeMap<u32, u8>, out: &Path) -> Result<()> {
         let page = addr & !0xff;
         pages.entry(page).or_insert([0xff; 256])[(addr - page) as usize] = b;
     }
+    // The RP2040 boot ROM decides when to erase a 4 KB sector from the block
+    // *number* (block_no * 256 / 4096), not from the target address. With gaps
+    // in the image (e.g. between the bootloader and the state page) block
+    // numbers and addresses drift apart and drag-and-drop installs end up with
+    // sectors erased in the middle of being written. Fill every gap with
+    // erased pages so that block N always lands at start + N * 256.
+    if let (Some(&first), Some(&last)) = (pages.keys().next(), pages.keys().next_back()) {
+        let mut a = first;
+        while a < last {
+            pages.entry(a).or_insert([0xff; 256]);
+            a += 256;
+        }
+    }
     let total = pages.len() as u32;
     let mut buf = Vec::with_capacity(pages.len() * 512);
     for (i, (addr, data)) in pages.iter().enumerate() {
