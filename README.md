@@ -219,6 +219,10 @@ The previous C++ (Pico SDK) firmware is kept in the [`legacy-cpp`](https://githu
 - The default data pin is **GP14** (was GP2); change it under Settings → LED strip if needed.
 - MQTT keeps the Home Assistant device and light entity (same unique id), so automations keep working.
   Effect names changed, so automations that select an effect by name need an update.
+  **After enabling MQTT on the new firmware, reload the MQTT integration once** (Settings → Devices &
+  services → MQTT → ⋮ → Reload) or restart Home Assistant: the light changed from the default to the JSON
+  schema, and Home Assistant only applies that when it creates the entity again. Until then the light
+  cannot be switched off and shows no color, brightness or effect controls.
 - The WLED JSON API is not implemented; use the MQTT integration in Home Assistant instead.
 - RGBW strips are not supported yet.
 
